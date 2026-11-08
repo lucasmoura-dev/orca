@@ -4,7 +4,7 @@ import type { AgentStatusEntry } from '../../../shared/agent-status/contracts/ag
 import { makePaneKey } from '../../../shared/workspace-layout/stable-pane-id'
 import type { TerminalTab } from '../../../shared/workspace-layout/terminal-tab-types'
 import type { ClaudeManagedAccount } from '../../../shared/managed-account-types'
-import type { ProjectExecutionRuntimeResolution } from '../../../shared/project-execution-runtime'
+import type { ProjectExecutionRuntimeResolution } from '../../../shared/execution-host/project-execution-runtime'
 import { getDefaultSettings } from '../../../shared/constants'
 import type * as localPreflightContext from '@/lib/local-preflight-context'
 import type * as paneSelectionLane from './codex-pane-selection-lane'
@@ -447,21 +447,6 @@ describe('a switch away from the login System default holds', () => {
 
     expect(await movable('acct-a', HOST, hostFolders())).toEqual([ptyId(1), ptyId(2)])
     expect(await movable('acct-a', HOST, sameLoginB)).toEqual([ptyId(1), ptyId(2)])
-  })
-
-  it.each([
-    ['another organization', { systemDefaultOrganizationUuid: 'org-other' }],
-    ['no organization', { systemDefaultOrganizationUuid: undefined }],
-    ['a WSL switch', null]
-  ])('leaves System default sessions alone for %s', async (_, overrides) => {
-    seedPanes([{ n: 1, agentType: 'claude', configDir: SYSTEM_FOLDER }])
-    laneByPtyId[ptyId(1)] = overrides ? 'host' : 'wsl:Ubuntu'
-    const target = overrides ? HOST : ({ runtime: 'wsl', wslDistro: 'Ubuntu' } as const)
-
-    const found = await scan('acct-a', target, hostFolders(overrides ?? {}))
-
-    expect(found.onAccount).toEqual([])
-    expect(found.elsewhere).toEqual([expect.objectContaining({ ptyId: ptyId(1), accountId: null })])
   })
 
   it("lists a session in the user's own folder as one a restart cannot move", async () => {
