@@ -10,8 +10,34 @@ import { updaterCodedMessage } from '../../../shared/updater-failure-copy'
 import { QUIT_AND_INSTALL_DELAY_MS } from './updater-state'
 import { UpdaterRemoteStatus } from './updater-remote-status'
 import { prepareThisProcessShipItStaging } from '../mac-install/shipit-leftover-recovery'
+import {
+  readCustomUpdaterConfig,
+  runCustomUpdate,
+  setCustomUpdateInstalledVersion,
+  type CustomUpdaterConfig
+} from '../custom/custom-updater'
 
 export abstract class UpdaterDownloadInstall extends UpdaterRemoteStatus {
+  /** Fork-only: the script merges, builds and installs; the card shows its progress as a download. */
+  private startCustomUpdate(config: CustomUpdaterConfig, version: string): void {
+    this.downloadInFlight = true
+    this.sendStatus({ state: 'downloading', percent: 0, version })
+    runCustomUpdate(config, version, (progress) => {
+      if (this.downloadInFlight) {
+        this.sendStatus({ state: 'downloading', percent: progress.percent, version })
+      }
+    })
+      .then(() => {
+        this.downloadInFlight = false
+        setCustomUpdateInstalledVersion(version)
+        this.sendStatus({ state: 'downloaded', version })
+      })
+      .catch((error) => {
+        this.downloadInFlight = false
+        this.sendErrorStatus(String(error?.message ?? error))
+      })
+  }
+
   protected quitAndInstall(): void {
     if (
       this.localBuildSelectionInProgress ||
@@ -90,6 +116,11 @@ export abstract class UpdaterDownloadInstall extends UpdaterRemoteStatus {
       return
     }
     if (this.deferHeadlessServeInstall('download', version)) {
+      return
+    }
+    const customUpdater = this.activeUpdateSource === 'release' ? readCustomUpdaterConfig() : null
+    if (customUpdater) {
+      this.startCustomUpdate(customUpdater, version)
       return
     }
     this.downloadInFlight = true

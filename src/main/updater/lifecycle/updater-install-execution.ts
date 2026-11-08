@@ -17,8 +17,30 @@ import { UpdaterMacInstallPreflight } from '../mac-install/updater-mac-install-p
 import { prepareThisProcessShipItStaging } from '../mac-install/shipit-leftover-recovery'
 import { MAC_DEFERRED_STAGING_TIMEOUT_MS } from './updater-state'
 import { wslMoveInstallHold } from './updater-wsl-move-install-hold'
+import {
+  executeCustomQuitAndInstall,
+  getCustomUpdateInstalledVersion
+} from '../custom/custom-updater'
 
 export abstract class UpdaterInstallExecution extends UpdaterMacInstallPreflight {
+  /** Fork-only: the AppImage is already in place; quit and relaunch it once this process is gone. */
+  private async performCustomQuitAndInstall(version: string): Promise<void> {
+    this.finishActiveUpdateCheckAttempt()
+    this.clearBackgroundCheckLaunchPending()
+    this.quitAndInstallInProgress = true
+    this.quittingForUpdate = true
+    this.sendStatus({ state: 'downloaded', version, installing: true }, { force: true })
+    const failure = await executeCustomQuitAndInstall({
+      prepare: () => this.runBeforeUpdateQuitCleanup(),
+      release: () => void releaseSessionsForInstaller(),
+      commit: () => this.commitInFlightInstall()
+    })
+    if (failure) {
+      this.resetQuitForUpdateState()
+      this.sendInstallFailureStatus({ state: 'error', message: failure, version })
+    }
+  }
+
   protected async performQuitAndInstall(): Promise<void> {
     if (this.quitAndInstallInProgress) {
       recordUpdaterLifecycle('quit_and_install_ignored', { reason: 'already-in-progress' })
@@ -69,6 +91,10 @@ export abstract class UpdaterInstallExecution extends UpdaterMacInstallPreflight
         retryAction: 'install',
         ...(pendingVersion ? { version: pendingVersion } : {})
       })
+      return
+    }
+    if (getCustomUpdateInstalledVersion()) {
+      await this.performCustomQuitAndInstall(pendingVersion)
       return
     }
     this.finishActiveUpdateCheckAttempt()
