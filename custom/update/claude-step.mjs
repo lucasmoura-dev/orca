@@ -30,9 +30,11 @@ function snapshotWorkingTree(ctx, label) {
 }
 
 async function copyChangedFiles(ctx, step, dir) {
-  const files = (await git(ctx, step, ['ls-files', '-m', '-o', '--exclude-standard']))
+  // git status cobre alterado, staged, novo e em conflito; ls-files -m perderia o que o Claude deu git add.
+  const files = (await git(ctx, step, ['status', '--porcelain', '--untracked-files=all']))
     .split('\n')
     .filter(Boolean)
+    .map((line) => line.slice(3).replace(/^.* -> /, ''))
   for (const file of files) {
     const source = path.join(WORKTREE, file)
     if (!existsSync(source) || statSync(source).isDirectory()) {

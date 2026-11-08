@@ -258,9 +258,26 @@ async function createBackupTag(ctx) {
 async function computeIntersection(ctx) {
   ctx.progress(6, 'intersection', 'calculando os arquivos que o custom e o upstream tocam')
   const base = await git(ctx, 'intersection', ['merge-base', 'HEAD', ctx.target])
-  const customFiles = (await git(ctx, 'intersection', ['diff', '--name-only', base, 'HEAD']))
-    .split('\n')
-    .filter(Boolean)
+  // Arquivos tocados por commits só do fork (fora do upstream/main e da tag); merges ficam de fora.
+  // Releases do upstream saem de um branch próprio, então um diff contra o merge-base misturaria
+  // commits do main do upstream com os do fork.
+  const customFiles = [
+    ...new Set(
+      (
+        await git(ctx, 'intersection', [
+          'log',
+          '--no-merges',
+          '--format=',
+          '--name-only',
+          'HEAD',
+          `^${ctx.target}`,
+          `^${UPSTREAM}/main`
+        ])
+      )
+        .split('\n')
+        .filter(Boolean)
+    )
+  ].sort()
   const upstreamFiles = new Set(
     (await git(ctx, 'intersection', ['diff', '--name-only', base, ctx.target]))
       .split('\n')
@@ -301,6 +318,22 @@ async function merge(ctx) {
     .filter(Boolean)
   if (conflicts.length === 0) {
     throw new StepError('merge', `git merge falhou sem conflitos; veja ${ctx.runLog}`)
+  }
+  // O bump de versão do release conflita com o bump anterior; a versão nova é sempre a certa.
+  if (conflicts.includes('package.json')) {
+    const hunk = await git(ctx, 'merge', ['diff', '--', 'package.json'])
+    const changed = hunk.split('\n').filter((l) => /^[-+ ][-+]/.test(l) || /^[-+][^-+]/.test(l))
+    if (changed.every((l) => /"version":/.test(l))) {
+      await git(ctx, 'merge', ['checkout', '--theirs', '--', 'package.json'])
+      await git(ctx, 'merge', ['add', '--', 'package.json'])
+      conflicts.splice(conflicts.indexOf('package.json'), 1)
+      ctx.log('package.json: conflito só na versão, resolvido com a versão do upstream')
+    }
+  }
+  if (conflicts.length === 0) {
+    await git(ctx, 'merge', ['commit', '--no-edit'])
+    ctx.result.mergeCommit = await git(ctx, 'merge', ['rev-parse', 'HEAD'])
+    return { conflicts: [] }
   }
   ctx.result.conflicts = conflicts
   const conflictDiff = await git(ctx, 'merge', ['diff', '--', ...conflicts])
