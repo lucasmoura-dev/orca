@@ -1,3 +1,4 @@
+import type { ClaudeAccountChoice } from '../../../../../../shared/claude-account-choice'
 import { agentTabLaunchStore } from './launch-agent-execution-context'
 import type { LaunchAgentInNewTabArgs } from './launch-agent-in-new-tab-args'
 import { readHostAgentStartupSettings } from '@/runtime/agent-launch-settings/agent-launch-settings-transport'
@@ -47,6 +48,7 @@ export async function launchAgentInWebHostTab(args: {
   trustWorktreeId?: string
   buildStartup: (choices: AgentLaunchChoices | undefined) => LaunchAgentStartupPromptPlan
   sessionOptions?: Readonly<Record<string, SessionOptionValue>>
+  claudeAccount?: ClaudeAccountChoice
   prompt: string
   promptDelivery: 'auto-submit' | 'draft' | 'submit-after-ready'
   agentArgs?: string | null
@@ -201,6 +203,7 @@ export async function launchAgentInWebHostTab(args: {
                 settings: hostSettings,
                 agentArgs: authoredArgs,
                 sessionOptions: args.sessionOptions,
+                ...(args.claudeAccount ? { claudeAccount: args.claudeAccount } : {}),
                 platform,
                 shell,
                 isRemote: true

@@ -69,6 +69,8 @@ export type Repo = {
   ghAccount?: GhAccountBinding
   /** Controls Orca's fork-default-branch sync offer for repos with upstream metadata. */
   forkSyncMode?: ForkSyncMode
+  /** New Claude chats here pin this account id, or `system`; empty or absent uses the selection. */
+  claudeAccountId?: string
   /** Whether Orca pre-trusts this repo's worktrees for agents. Absent means undecided: desktop launches ask once. */
   agentWorkspaceTrust?: AgentWorkspaceTrustDecision
   /** Canonical identity for the repo remote Orca should use for provider-level grouping. */
@@ -117,3 +119,8 @@ export type BaseRefSearchResult = {
   refName: string
   localBranchName: string
 }
+
+/** A repo's Claude account default naming the host's System default login. */
+export const CLAUDE_SYSTEM_DEFAULT_ACCOUNT_ID = 'system'
+/** Empty clears the default; otherwise `system` or a saved account id. */
+export const CLAUDE_ACCOUNT_DEFAULT_PATTERN = /^(|[a-zA-Z0-9_-]{1,512})$/

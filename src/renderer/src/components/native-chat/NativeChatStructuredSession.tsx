@@ -262,7 +262,13 @@ export function NativeChatStructuredSession(props: Omit<NativeChatStructuredView
       style={appearanceStyle}
       data-native-chat-scheme={appearanceStyle.colorScheme}
     >
-      {nativeChatPaneHeader(props, ownerWorktreeId, appearanceStyle.colorScheme, handOff)}
+      {nativeChatPaneHeader(
+        props,
+        ownerWorktreeId,
+        appearanceStyle.colorScheme,
+        handOff,
+        controller.claudeAccount
+      )}
       <NativeChatCrewFrame
         panel={<NativeChatCrewPanel {...props} composerRef={composerRef} canMention={canMention} />}
       >

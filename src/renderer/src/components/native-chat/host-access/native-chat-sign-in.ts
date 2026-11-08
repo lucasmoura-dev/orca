@@ -1,3 +1,4 @@
+import type { AgentSessionClaudeAccount } from '../../../../../shared/claude-account-choice'
 import { createContext, useCallback, useContext, useMemo, useRef, useState } from 'react'
 import { translate } from '@/i18n/i18n'
 import { useAppStore } from '@/store'
@@ -45,21 +46,33 @@ export function nativeChatSignInLabel(signIn: NativeChatSignIn): string {
     : translate('accounts.claude.signIn', 'Sign in')
 }
 
-/** Offer local selected-account sign-in until successful, then suppress it until the failure or failure-row count changes. */
+/** Offer local sign-in to the chat's pinned account, else the selected one, until successful, then
+ *  suppress it until the failure or failure-row count changes. */
 function useManagedClaudeSignIn(input: {
   agent: string
   target: RuntimeClientTarget
   failure: unknown
   failureRows: number
+  claudeAccount?: AgentSessionClaudeAccount
 }): NativeChatSignIn | null {
   // Why local only: the hidden sign-in runs on this device, and Claude chats run on its host.
-  const accountId = useAppStore((s) =>
-    input.agent === 'claude' && input.target.kind === 'local'
+  const local = input.agent === 'claude' && input.target.kind === 'local'
+  const selectedAccountId = useAppStore((s) =>
+    local
       ? (s.settings?.activeClaudeManagedAccountIdsByRuntime?.host ??
         s.settings?.activeClaudeManagedAccountId ??
         null)
       : null
   )
+  // A pinned chat signs in only to its own account; a removed one has nothing to sign in to.
+  const pinned = input.claudeAccount
+  const accountId = !local
+    ? null
+    : pinned
+      ? pinned.kind === 'managed' && pinned.state !== 'removed'
+        ? (pinned.accountId ?? null)
+        : null
+      : selectedAccountId
   const [signingIn, setSigningIn] = useState(false)
   // Why a ref: the notice and a transcript row both sign in, and state lags a double press.
   const signingInRef = useRef(false)
@@ -100,6 +113,7 @@ export function useNativeChatSignIn(input: {
   groupId?: string
   failure: unknown
   startFailures: readonly { kind: string }[]
+  claudeAccount?: AgentSessionClaudeAccount
 }): NativeChatSignIn | null {
   const managed = useManagedClaudeSignIn({
     ...input,

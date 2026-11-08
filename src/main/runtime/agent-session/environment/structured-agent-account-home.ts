@@ -11,6 +11,7 @@ import {
 import { resolveAbsoluteDirOverride } from '../../../../shared/absolute-dir-override'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
+import type { ClaudeAccountChoice } from '../../../../shared/claude-account-choice'
 
 // Share account-home resolution between create pins and recordless catalog fingerprints or pickers show another account's models.
 
@@ -19,6 +20,8 @@ export type StructuredClaudeAccountHomeDeps = {
   wslDistro: string | null
   /** `identity` names the selected account before its folder exists; the default checks availability. */
   purpose?: 'identity'
+  /** The chat's pinned account; absent follows the selection. */
+  choice?: ClaudeAccountChoice
   getClaudeConfigDirectory: (
     target: { runtime: 'host' } | { runtime: 'wsl'; wslDistro: string }
   ) => string | null | undefined
@@ -30,7 +33,11 @@ export async function resolveStructuredClaudeAccountHomePath(
   // Why only an account: System default keeps the launch-env and configured homes below.
   const router = deps.wslDistro ? undefined : getClaudeProfileRouter()
   const accountHome = router
-    ? await claudeRoutedHomeAsync(router, deps.purpose === 'identity' ? 'identity' : 'checked')
+    ? await claudeRoutedHomeAsync(
+        router,
+        deps.purpose === 'identity' ? 'identity' : 'checked',
+        deps.choice
+      )
     : null
   if (accountHome) {
     return accountHome

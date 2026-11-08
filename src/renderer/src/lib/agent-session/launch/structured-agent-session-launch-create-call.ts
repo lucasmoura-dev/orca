@@ -1,5 +1,7 @@
 import { structuredAgentSessionSettledSends } from '../../../../../shared/agent-session/requests/structured-agent-session-send-settlement'
+import { structuredAgentSessionCreateFingerprint } from '../../../../../shared/agent-session/lifecycle/structured-agent-session-mutation'
 import {
+  AGENT_SESSION_CREATE_CLAUDE_ACCOUNT_RUNTIME_CAPABILITY,
   AGENT_SESSION_CREATE_FORK_RUNTIME_CAPABILITY,
   AGENT_SESSION_SEND_SELECTION_RUNTIME_CAPABILITY,
   AGENT_SESSION_SEND_SKILLS_RUNTIME_CAPABILITY
@@ -171,6 +173,7 @@ export async function launchStructuredAgentSession(
     onHostSeed?.(hostSeed)
   }
   await requireHostPermission(intent)
+  await applyStructuredLaunchClaudeAccount(intent)
   if (!intent.createPrepared) {
     let supported = false
     let takesExplicitOptions = false
@@ -271,5 +274,35 @@ export async function launchStructuredAgentSession(
     sessionId: result.value.sessionId,
     fence: result.value.fence,
     ...(firstMessage ? { firstMessage, cursor: result.cursor } : {})
+  }
+}
+
+/** A host that takes a chat's Claude account gets it in the fingerprinted create; an older host
+ *  creates on its selection, as it always did. */
+async function applyStructuredLaunchClaudeAccount(
+  intent: StructuredAgentSessionLaunchIntent
+): Promise<void> {
+  if (
+    !intent.claudeAccount ||
+    intent.params.claudeAccount ||
+    intent.params.forkFrom ||
+    intent.params.resumeFrom ||
+    !(await structuredAgentSessionHostSupports(
+      intent.target,
+      AGENT_SESSION_CREATE_CLAUDE_ACCOUNT_RUNTIME_CAPABILITY
+    ))
+  ) {
+    return
+  }
+  const params = { ...intent.params, claudeAccount: intent.claudeAccount }
+  intent.params = {
+    ...params,
+    envelope: {
+      ...params.envelope,
+      payloadFingerprint: structuredAgentSessionCreateFingerprint({
+        sessionId: intent.sessionId,
+        ...params
+      })
+    }
   }
 }

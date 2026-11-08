@@ -1,3 +1,4 @@
+import type { ClaudeAccountChoice } from '../../../shared/claude-account-choice'
 import { stat } from 'node:fs/promises'
 import {
   agentSessionRefusalError,
@@ -45,6 +46,7 @@ export type StructuredAgentSessionCreateIntentInput = {
   forkFrom?: { sessionId: string; throughItemId: string }
   resumeFrom?: StructuredAgentSessionResumeSource
   structuredAgentCliSourceEvidence?: StructuredAgentCliSourceEvidence
+  claudeAccount?: ClaudeAccountChoice
 }
 
 export function resolveCommittedStructuredAgentSessionAdoptionIntent(input: {

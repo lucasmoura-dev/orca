@@ -20641,6 +20641,7 @@
         "historyInOtherAccount": "O histórico deste chat está em outra conta do Claude. Volte para essa conta para continuar.",
         "claudeAccountFolderMissing": "A pasta da conta do Claude selecionada não foi encontrada. Entre nela novamente ou escolha outra conta.",
         "claudeAccountSetupFailed": "Não foi possível configurar a conta do Claude selecionada. Tente novamente ou escolha outra conta.",
+        "claudeAccountRemoved": "A conta do Claude desta conversa foi removida do Orca. Adicione-a novamente nas Configurações ou inicie uma nova conversa em outra conta.",
         "agentCommandNotRunnable": "O Comando do {{agent}} em Configurações → Agentes deve começar com um programa que o Orca consiga encontrar. Variáveis, pipes e outras sintaxes de shell não são compatíveis; use a configuração Ambiente para variáveis. Altere ou redefina o comando.",
         "runtimeNotInstalled": "{{agent}} não está instalado no computador que executa este chat. Instale-o pelo chat em uma versão atual do Orca.",
         "fullAccessAsRoot": "{{agent}} não usará Acesso total enquanto for executado como root. Escolha outra permissão para {{agent}} em Configurações → Agentes para o computador que executa este chat e inicie um novo chat.",
@@ -23031,6 +23032,13 @@
   "nativeChat": {
     "math": {
       "scrollDisplayEquation": "Rolar equação em bloco"
+    },
+    "claudeAccount": {
+      "removed": "Removida do Orca",
+      "needsSignIn": "Precisa entrar",
+      "systemTooltip": "Esta conversa usa o login padrão do Claude neste dispositivo. Trocar de conta em outro lugar não a move.",
+      "managedTooltip": "Esta conversa usa esta conta do Claude. Trocar de conta em outro lugar não a move.",
+      "fixTooltip": "Abra Contas para entrar nesta conta ou adicioná-la novamente. O Orca nunca move esta conversa para outra conta."
     }
   },
   "runtime": {
@@ -23261,7 +23269,11 @@
     "workspaceStartupFailed": "Não foi possível iniciar {{agent}}. Verifique os argumentos desta configuração e tente novamente.",
     "sameAsTextDefault": "Igual ao padrão · {{value0}}",
     "chatChoicesNote": "As escolhas de modelo ou esforço de {{agent}} sem uma flag de CLI se aplicam aos chats.",
-    "composedChoicesNote": "As escolhas de esforço e velocidade de {{agent}} estão incluídas no argumento do modelo."
+    "composedChoicesNote": "As escolhas de esforço e velocidade de {{agent}} estão incluídas no argumento do modelo.",
+    "claudeAccount": {
+      "label": "Conta",
+      "systemDefaultWithEmail": "Padrão do sistema ({{email}})"
+    }
   },
   "wslMove": {
     "entry": {
@@ -23864,5 +23876,16 @@
     "loadFailed": "Não foi possível carregar o histórico do Git",
     "updateHost": "Atualize o Orca em {{host}} para abrir o grafo do Git",
     "title": "Grafo do Git"
+  },
+  "repository": {
+    "claudeAccount": {
+      "title": "Conta do Claude",
+      "description": "A conta do Claude em que as novas conversas deste projeto começam.",
+      "longDescription": "Novas conversas do Claude neste projeto começam nesta conta, a menos que você escolha outra ao iniciá-las. Conversas existentes mantêm a conta em que começaram.",
+      "selectLabel": "Conta",
+      "inherit": "Usar a conta selecionada",
+      "removed": "Conta removida",
+      "removedHint": "Esta conta foi removida, então as novas conversas aqui usam a conta selecionada."
+    }
   }
 }

@@ -1,3 +1,4 @@
+import type { ClaudeAccountChoice } from '../../claude-account-choice'
 import { parseExecutionHostId, type ExecutionHostId } from '../../execution-host'
 import {
   textActionPickerEffectiveChoices,
@@ -8,7 +9,11 @@ import { agentPickerArgumentsKnown } from './agent-launch-picker-authority'
 
 import { agentPickerOptions } from './agent-launch-picker-catalog'
 import { projectAgentLaunchInputViews } from '../choices/agent-launch-profile'
-import type { AgentChoicePatch, AgentDedicatedChoices } from '../choices/agent-launch-choices'
+import type {
+  AgentChoicePatch,
+  AgentDedicatedChoices,
+  AgentLaunchInputViews
+} from '../choices/agent-launch-choices'
 import { terminalAgentChoices } from '../choices/agent-launch-choices'
 import {
   reconcileAgentChoiceArgs,
@@ -66,6 +71,8 @@ export type AgentPickerDraft = {
   }
   /** The first prompt typed in the panel, set only on the launch: never part of a kept setup. */
   prompt?: string
+  /** The Claude account a new chat or terminal pins; set only for a launch, never a kept setup. */
+  claudeAccount?: ClaudeAccountChoice
 }
 
 export function agentPickerDraft(
@@ -242,12 +249,15 @@ export function agentPickerLaunchInputs(draft: AgentPickerDraft, entry?: AgentPi
         ...agentPickerOptions(draft.agent, choices.model, 'terminal').map((option) => option.id)
       ])
     })
-  return projectAgentLaunchInputViews(draft.agent, choices, result, {
+  const views: AgentLaunchInputViews = projectAgentLaunchInputViews(draft.agent, choices, result, {
     ...(authorized && draft.arguments !== undefined ? { agentArgs: draft.arguments } : {}),
     modelContext: entry?.terminal.model,
     sourceKeys: current?.context.literalKeys,
     permissionContext: entry?.terminal.permissionMode
   })
+  return draft.claudeAccount && draft.agent === 'claude'
+    ? { ...views, claudeAccount: draft.claudeAccount }
+    : views
 }
 
 export function agentPickerFreshLaunchInputs(

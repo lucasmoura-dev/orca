@@ -1,3 +1,5 @@
+import type { ClaudeAccountChoice } from '../../claude-account-choice'
+import { CLAUDE_ACCOUNT_PIN_ENV, claudeAccountPinEnvValue } from '../../claude-account-pin-env'
 import type { GlobalSettings } from '../../global-settings-types'
 import type { SessionOptionValue } from '../../native-chat/input/native-chat-session-options'
 import type { TuiAgent } from '../catalog/tui-agent'
@@ -53,6 +55,8 @@ export function resolveAgentStartupPlanInputs(args: {
   sessionOptionsYieldToAgentArgs?: boolean
   /** Orca types into this launch after start (worker, automation, handoff), not a user. */
   suppressStartupUpdatePrompt?: boolean
+  /** Claude only: the account this terminal pins; kept in the launch config so restarts keep it. */
+  claudeAccount?: ClaudeAccountChoice
 }): AgentStartupPlanInputs {
   const { agent, platform, isRemote, sessionOptions } = args
   const settings = agentLaunchPermissionSettings(agent, args.settings, sessionOptions)
@@ -77,7 +81,12 @@ export function resolveAgentStartupPlanInputs(args: {
     agent,
     cmdOverrides: settings.agentCmdOverrides ?? {},
     agentArgs: options.agentArgs ?? null,
-    agentEnv: resolveTuiAgentLaunchEnv(agent, settings, platform),
+    agentEnv: {
+      ...resolveTuiAgentLaunchEnv(agent, settings, platform),
+      ...(agent === 'claude' && args.claudeAccount
+        ? { [CLAUDE_ACCOUNT_PIN_ENV]: claudeAccountPinEnvValue(args.claudeAccount) }
+        : {})
+    },
     platform,
     shell,
     isRemote,

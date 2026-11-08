@@ -1,3 +1,4 @@
+import type { AgentSessionClaudeAccount } from '../../claude-account-choice'
 import type { AgentJournalCursor } from '../journal/agent-session-journal-identity'
 import type { AgentJournalThreadGoal } from '../journal/agent-session-journal-types'
 import type { AgentSessionConversationCommand } from '../agent-session-conversation-command'
@@ -22,6 +23,8 @@ export type AgentSessionOptionsResult = {
   /** This host verified that account selection moves this chat with its history intact. */
   canSwitchAccount?: boolean
   accountUsage?: true
+  /** The Claude account this chat is pinned to; absent for chats that follow the selection. */
+  claudeAccount?: AgentSessionClaudeAccount
   /** Fresh host observation; absent means an older host or unknown conversation. */
   sessionNeverStarted?: boolean
   /** Saved conversation on this execution host, resolved from the record's own account store. */

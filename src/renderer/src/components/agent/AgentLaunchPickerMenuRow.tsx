@@ -1,3 +1,4 @@
+import type { ClaudeAccountChoice } from '../../../../shared/claude-account-choice'
 import { memo, useId } from 'react'
 import { Button } from '@/components/ui/button'
 import {
@@ -55,7 +56,8 @@ export const AgentPickerMenuRow = memo(function AgentPickerMenuRow({
   shortcut,
   onSelectAgent,
   isDefault = false,
-  onSetDefault
+  onSetDefault,
+  claudeAccount
 }: {
   entry: AgentPickerEntry
   draftScope?: object
@@ -85,6 +87,8 @@ export const AgentPickerMenuRow = memo(function AgentPickerMenuRow({
   isDefault?: boolean
   /** Base agent rows only; setup rows are presets, not default-agent choices. */
   onSetDefault?: (agent: AgentPickerEntry['agent']) => void
+  /** A row for one Claude account: its launches and setup start on that account. */
+  claudeAccount?: ClaudeAccountChoice
 }) {
   useUiLanguageRevision()
   const setupId = useId()
@@ -98,6 +102,9 @@ export const AgentPickerMenuRow = memo(function AgentPickerMenuRow({
         }
       })
     : undefined
+  const launchDraft = claudeAccount
+    ? { ...(initial ?? selected ?? source ?? agentPickerDraft(entry)), claudeAccount }
+    : initial
   const closeMenu = useDropdownMenuClose()
   const unavailable = entry.rows.find((row) => row.kind === 'chat-unavailable')
   const setDefault =
@@ -133,7 +140,7 @@ export const AgentPickerMenuRow = memo(function AgentPickerMenuRow({
       preset={preset}
       entry={entry}
       initial={source}
-      seed={initial ?? selected ?? source}
+      seed={launchDraft ?? selected ?? source}
       surface={selected?.surface}
       mode={mode}
       open={openSetup === setupId}
@@ -167,7 +174,7 @@ export const AgentPickerMenuRow = memo(function AgentPickerMenuRow({
             if (disabled || !entry.surfaces.length) {
               return
             }
-            const draft = initial ?? (mode === 'select' ? selected : undefined)
+            const draft = launchDraft ?? (mode === 'select' ? selected : undefined)
             const surface = draft?.surface ?? entry.defaultSurface
             const row = draft
               ? pickerLaunchRow(entry, surface)

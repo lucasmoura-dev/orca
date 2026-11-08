@@ -1,4 +1,8 @@
-import { agentSessionAccountHome } from '../../../../shared/agent-session/lifecycle/agent-session-account-home'
+import {
+  agentSessionAccountHome,
+  agentSessionClaudeAccountPin
+} from '../../../../shared/agent-session/lifecycle/agent-session-account-home'
+import { claudeAccountChoiceOf } from '../../../../shared/claude-account-choice'
 import { applyStructuredCodexWorkspaceTrust } from '../../../agent-launch/trust/agent-workspace-trust-spawn'
 import { ACP_LAUNCH_SPECS, type AcpLaunchSpec } from '../../../acp/acp-launch-specs'
 import { acpStructuredAgentDefinition } from '../../../acp/acp-structured-agent-definitions'
@@ -159,18 +163,23 @@ export const STRUCTURED_AGENT_RUNTIME_CATALOG: readonly StructuredAgentRuntimeCa
       modelCatalog: claudeModelCatalogDiscovery,
       ...CLAUDE_CLI_CONVERSATIONS,
       supportsLocation: supportsClaudeStructuredLocation,
-      // Without a router a launch keeps the record's home (resolveClaudeStructuredLaunchHome).
-      launchFollowsSelection: () => getClaudeProfileRouter() !== undefined,
-      resolveAccountHome: async ({ launchEnv, location, purpose }, services) =>
-        agentSessionAccountHome(
+      // Without a router a launch keeps the record's home (resolveClaudeStructuredLaunchHome); a
+      // pinned chat keeps its account.
+      launchFollowsSelection: (accountHome) =>
+        getClaudeProfileRouter() !== undefined && !agentSessionClaudeAccountPin(accountHome),
+      resolveAccountHome: async ({ launchEnv, location, purpose, claudeAccount }, services) => {
+        const home = agentSessionAccountHome(
           CLAUDE_STRUCTURED_AGENT,
           await resolveStructuredClaudeAccountHomePath({
             launchEnv,
             wslDistro: location?.wslDistro ?? null,
             ...(purpose !== 'read' ? { purpose: 'identity' } : {}),
+            ...(claudeAccount ? { choice: claudeAccountChoiceOf(claudeAccount) } : {}),
             getClaudeConfigDirectory: services.getClaudeConfigDirectory
           })
         )
+        return claudeAccount ? { ...home, pin: claudeAccount } : home
+      }
     }
   },
   ...ACP_LAUNCH_SPECS.map((spec): StructuredAgentRuntimeCatalogEntry => ({

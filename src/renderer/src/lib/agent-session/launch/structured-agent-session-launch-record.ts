@@ -1,3 +1,7 @@
+import {
+  ClaudeAccountChoiceSchema,
+  type ClaudeAccountChoice
+} from '../../../../../shared/claude-account-choice'
 import { isTuiAgent } from '../../../../../shared/agent-launch/catalog/tui-agent-config'
 import type { TuiAgent } from '../../../../../shared/agent-launch/catalog/tui-agent'
 import type {
@@ -64,6 +68,7 @@ export type StructuredAgentLaunchPersistedRecord = {
   seedOptions?: Readonly<Record<string, string>>
   /** When a failed launch failed; records written by older builds lack it. */
   failedAt?: number
+  claudeAccount?: ClaudeAccountChoice
 }
 
 export function structuredAgentLaunchRecordFor(
@@ -93,7 +98,8 @@ export function structuredAgentLaunchRecordFor(
     ...(intent.createMessageSupport === undefined
       ? {}
       : { createMessageSupport: intent.createMessageSupport }),
-    ...(pairedSeed ? { seedOptions: pairedSeed } : {})
+    ...(pairedSeed ? { seedOptions: pairedSeed } : {}),
+    ...(intent.claudeAccount ? { claudeAccount: intent.claudeAccount } : {})
   }
 }
 
@@ -151,6 +157,9 @@ export function validRecord(value: unknown): value is Omit<
       value.explicitLaunchOptions === undefined ||
       isAgentSessionOptions(value.explicitLaunchOptions)) &&
     (createMessageSupport === undefined || typeof createMessageSupport === 'boolean') &&
+    (!('claudeAccount' in value) ||
+      value.claudeAccount === undefined ||
+      ClaudeAccountChoiceSchema.safeParse(value.claudeAccount).success) &&
     (forkFrom === undefined ||
       (validForkSource(forkFrom) &&
         resumeFrom === undefined &&

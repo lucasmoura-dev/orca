@@ -24,13 +24,13 @@ import { AgentDefaultArgsInput } from './launch-settings/AgentLaunchDefaultsEdit
 import { NativeChatSessionOptionRows } from '../native-chat/session/options/controls/NativeChatSessionOptionRows'
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible'
 import type { SessionOptionDescriptor } from '../../../../shared/native-chat/input/native-chat-session-options'
-import { AgentPermissionMenu } from './launch-settings/AgentPermissionChoiceControls'
 import {
   AgentLaunchSetupFooter,
   agentLaunchSetupArgumentsNote,
   type AgentLaunchSetupFooterHandle
 } from './AgentLaunchSetupFooter'
 import { AgentLaunchSetupActions } from './AgentLaunchSetupActions'
+import { AgentLaunchSetupAccessRows } from './AgentLaunchSetupAccessRows'
 import { agentPickerPanelArguments } from '../../../../shared/agent-launch/picker/agent-launch-picker-arguments'
 import {
   acceptAgentPickerArguments,
@@ -42,8 +42,7 @@ import { agentPickerEffectiveChoices } from '../../../../shared/agent-launch/pic
 import type { AgentPickerSurface } from '../../../../shared/agent-launch/picker/agent-launch-picker'
 import {
   agentPickerModels,
-  agentPickerEntryOptions,
-  agentPickerPermissions
+  agentPickerEntryOptions
 } from '../../../../shared/agent-launch/picker/agent-launch-picker-catalog'
 
 export function AgentLaunchSetupPanel({
@@ -290,36 +289,10 @@ export function AgentLaunchSetupPanel({
         {renderOptions(
           optionRows.filter((row) => row.id !== 'fastMode' && row.id !== 'serviceTier')
         )}
-        {!entry.textGeneration ? (
-          <div>
-            <AgentPermissionMenu
-              agentId={entry.agent}
-              label={entry.label}
-              layout="row"
-              showInherited={false}
-              rawValue={argumentsView.selectedPermission ? undefined : argumentsView.permission}
-              disabled={
-                disabled ||
-                defaultsPending ||
-                !argumentsView.permission ||
-                (entry.surfaces.includes('terminal') && !argumentsKnown)
-              }
-              permission={{
-                choice: argumentsView.selectedPermission ?? 'own',
-                defaultChoice: argumentsView.selectedPermission ?? 'own',
-                choices: agentPickerPermissions(entry.agent, draft.surface),
-                source: 'agent',
-                flag: '',
-                argsSetPermission: false,
-                onSelect: (choice) => {
-                  if (choice !== 'default') {
-                    editDraft({ kind: 'permission', value: choice })
-                  }
-                }
-              }}
-            />
-          </div>
-        ) : null}
+        <AgentLaunchSetupAccessRows
+          {...{ entry, draft, getDraft, onDraftChange, editDraft, disabled, defaultsPending }}
+          {...{ argumentsView, argumentsKnown }}
+        />
         {renderOptions(
           optionRows.filter((row) => row.id === 'fastMode' || row.id === 'serviceTier')
         )}

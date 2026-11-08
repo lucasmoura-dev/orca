@@ -4,6 +4,7 @@ import { assertStructuredAgentResolutionCurrent } from '../../../native-chat/str
 import { activeProviderContext } from '../../../../shared/agent-session/agent-session-provider-context'
 import { getClaudeProfileRouter } from '../../../claude-accounts/claude-profile-installed-router'
 import { requireLegacyAgentSessionAccountHome } from '../../../../shared/agent-session/lifecycle/agent-session-account-home'
+import { claudeAccountChoiceOf } from '../../../../shared/claude-account-choice'
 import type {
   Options as ClaudeAgentSdkOptions,
   PermissionMode
@@ -265,7 +266,12 @@ export function claudeStructuredLaunchPart(
       sources,
       { runtimeOnPath: false }
     )
-    const accountRecipe = await prepareClaudeLaunchAccount(router, env, accountHome.path)
+    const accountRecipe = await prepareClaudeLaunchAccount(
+      router,
+      env,
+      accountHome.path,
+      accountHome.pin ? claudeAccountChoiceOf(accountHome.pin) : undefined
+    )
     const launchHome = accountRecipe.home
     const resumesTranscript = resumedWithoutRouter ?? (await resumes(launchHome))
     if (fork?.throughEntryId && !resumesTranscript) {

@@ -1,3 +1,4 @@
+import type { ClaudeAccountChoice } from '../../../../../../shared/claude-account-choice'
 import type { StructuredSessionSurface } from '../../../../agent-session/structured-agent-session-close'
 import { structuredAgentSessionTabId } from '../../../../../../shared/agent-session/view/structured-agent-session-projection'
 import { seededPermissionMode } from '../../../../../../shared/native-chat/input/native-chat-session-option-defaults'
@@ -23,6 +24,7 @@ import {
 import type { StructuredAgentSessionHost } from '../../../../../native-chat/agent-session-wire/host/structured-agent-session-host'
 import type { StructuredAgentSessionCaller } from '../../../../../native-chat/agent-session-wire/host/structured-agent-session-host-types'
 import type {
+  StructuredAgentSessionCreateParams,
   StructuredAgentSessionResumeSource,
   StructuredAgentSessionFirstMessage
 } from '../../../../../../shared/agent-session/structured-agent-session-create'
@@ -52,17 +54,9 @@ export type PreparedStructuredAgentSessionCreate = {
 }
 
 /** New creates keep the immutable client intent in the ledger; legacy creates keep attach identity. */
-export function structuredAgentSessionCreateIntentFingerprint(params: {
-  envelope: AgentSessionMutationEnvelope
-  worktree: string
-  agent: string
-  forkFrom?: { sessionId: string; throughItemId: string }
-  resumeFrom?: StructuredAgentSessionResumeSource
-  tabId?: string
-  firstMessage?: StructuredAgentSessionFirstMessage
-  optionsMode?: 'replace-model-selection'
-  options?: Readonly<Record<string, string>>
-}): string {
+export function structuredAgentSessionCreateIntentFingerprint(
+  params: Omit<StructuredAgentSessionCreateParams, 'agent' | 'tabPlacement'> & { agent: string }
+): string {
   return computeAgentSessionPayloadFingerprint({
     method: 'agentSession.create',
     sessionId: params.envelope.sessionId,
@@ -74,7 +68,8 @@ export function structuredAgentSessionCreateIntentFingerprint(params: {
       tabId: params.tabId,
       firstMessage: params.firstMessage,
       optionsMode: params.optionsMode,
-      options: params.options
+      options: params.options,
+      claudeAccount: params.claudeAccount
     }
   })
 }
@@ -98,6 +93,8 @@ export async function prepareStructuredAgentSessionCreateForWorktree(args: {
   tabId?: string
   firstMessage?: StructuredAgentSessionFirstMessage
   atRest?: boolean
+  /** The Claude account a new chat pins; absent resolves the workspace default, then the selection. */
+  claudeAccount?: ClaudeAccountChoice
 }): Promise<PreparedStructuredAgentSessionCreate> {
   const fork = args.forkFrom
   if (fork && (args.resumeFrom || args.options || args.optionsMode || args.atRest !== true)) {
@@ -123,7 +120,8 @@ export async function prepareStructuredAgentSessionCreateForWorktree(args: {
     callerKey: args.caller.callerKey,
     structuredAgentCliSourceEvidence,
     ...(args.resumeFrom ? { resumeFrom: args.resumeFrom } : {}),
-    ...(args.forkFrom ? { forkFrom: args.forkFrom } : {})
+    ...(args.forkFrom ? { forkFrom: args.forkFrom } : {}),
+    ...(args.claudeAccount ? { claudeAccount: args.claudeAccount } : {})
   })
   const attachFingerprint = computeAgentSessionPayloadFingerprint({
     method: 'agentSession.attach',

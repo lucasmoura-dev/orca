@@ -3,14 +3,17 @@ import type { ClaudeProfileRouter } from '../../../claude-accounts/claude-profil
 import { AgentSessionPreSpawnError } from '../../../native-chat/agent-session-wire/providers/structured-agent-session-adapter-errors'
 import { resolveSessionFilePath } from '../../../native-chat/session-file-resolver'
 import { prepareClaudeLaunchAccount } from '../../claude-launch-account'
+import type { LegacyAgentSessionAccountHome } from '../../../../shared/agent-session/lifecycle/agent-session-account-home'
+import { claudeAccountChoiceOf } from '../../../../shared/claude-account-choice'
 
-/** Follow the current account selection and pin its environment for this launch. */
+/** Use the chat's pinned account, else follow the selection, and pin its environment for this launch. */
 export async function resolveClaudeStructuredLaunchHome(
   router: ClaudeProfileRouter | undefined,
   env: Record<string, string>,
-  recordHome: string
+  recordHome: LegacyAgentSessionAccountHome
 ): Promise<string> {
-  return (await prepareClaudeLaunchAccount(router, env, recordHome)).home
+  const choice = recordHome.pin ? claudeAccountChoiceOf(recordHome.pin) : undefined
+  return (await prepareClaudeLaunchAccount(router, env, recordHome.path, choice)).home
 }
 
 async function claudeTranscriptExists(input: {

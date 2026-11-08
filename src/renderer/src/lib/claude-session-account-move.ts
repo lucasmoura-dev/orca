@@ -1,6 +1,7 @@
 /** Find sessions affected by account selection; resume preserves the session while launch reads the newly selected account folder. */
 
 /** Find sessions affected by account selection; resume preserves the session while launch reads the newly selected account folder. */
+import { CLAUDE_ACCOUNT_PIN_ENV } from '../../../shared/claude-account-pin-env'
 import { useAppStore } from '@/store'
 import type { AppState } from '@/store/types'
 import {
@@ -118,7 +119,12 @@ function* localClaudePanes(
           continue
         }
         const entry = state.agentStatusByPaneKey[makePaneKey(tab.id, leafId)]
-        if (entry?.agentType !== 'claude' || entry.structuredHostOwned) {
+        // A pane pinned to an account never moves with the selection.
+        if (
+          entry?.agentType !== 'claude' ||
+          entry.structuredHostOwned ||
+          state.getAgentLaunchConfigForStatusEntry(entry)?.agentEnv[CLAUDE_ACCOUNT_PIN_ENV]
+        ) {
           continue
         }
         const { laneKey } = resolveCodexPaneSelectionLane({ state, tab, ptyId })

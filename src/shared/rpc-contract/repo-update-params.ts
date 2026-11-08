@@ -1,3 +1,4 @@
+import { CLAUDE_ACCOUNT_DEFAULT_PATTERN } from '../repo-types'
 import { z } from 'zod'
 import { normalizeRepoSourceControlAiOverrides } from '../source-control/ai/settings/source-control-ai-repo-settings'
 import { normalizeRepoBadgeColor } from '../repo-badge-color'
@@ -73,6 +74,7 @@ export function createRepoUpdateSchema<T extends Readonly<Record<string, z.ZodTy
           return normalizeGhAccountBinding(value) ?? undefined
         }),
       forkSyncMode: z.enum(['ask', 'safe-auto', 'off']).optional(),
+      claudeAccountId: z.string().regex(CLAUDE_ACCOUNT_DEFAULT_PATTERN).optional(),
       agentWorkspaceTrust: z.enum(['pre-trust', 'agent-asks']).optional(),
       externalWorktreeVisibility: z.enum(['hide', 'show']).nullable().optional(),
       externalWorktreeVisibilityPromptDismissedAt: z.number().finite().optional(),

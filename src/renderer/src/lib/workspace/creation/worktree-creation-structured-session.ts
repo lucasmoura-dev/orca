@@ -118,6 +118,9 @@ export async function launchStructuredWorktreeSession(
     ...(request.launchInputs?.chatSessionOptions !== undefined
       ? { chatLaunchOptions: request.launchInputs.chatSessionOptions }
       : {}),
+    ...(request.launchInputs?.claudeAccount
+      ? { claudeAccount: request.launchInputs.claudeAccount }
+      : {}),
     prompt: request.launchDraftPrompt ?? request.quickPrompt,
     promptAttachments,
     promptSkills: pending?.heldChatSkills,

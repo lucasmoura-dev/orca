@@ -1,3 +1,4 @@
+import type { ClaudeAccountChoice } from '../../../../../../shared/claude-account-choice'
 import type { AgentSessionLaunchRequest } from '@/lib/agent-session/launch/routing/agent-session-launch-plan'
 import type { TuiAgent } from '../../../../../../shared/agent-launch/catalog/tui-agent'
 import type { LaunchSource } from '../../../../../../shared/telemetry-property-schemas'
@@ -27,6 +28,8 @@ export type LaunchAgentInNewTabArgs = LaunchAgentInNewTabRequest & {
   /** The launch's saved choice; a chat seeds it and a terminal applies it as flags. */
   sessionOptions?: Readonly<Record<string, string>>
   chatSessionOptions?: Readonly<Record<string, string>>
+  /** The Claude account a new chat or terminal pins. */
+  claudeAccount?: ClaudeAccountChoice
   /** On terminals, a flag `agentArgs` sets itself wins over the inherited saved choice. */
   sessionOptionsYieldToAgentArgs?: true
   initialCwd?: string | null

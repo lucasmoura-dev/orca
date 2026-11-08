@@ -14,6 +14,7 @@ import {
 } from './structured-agent-session-identifiers'
 import * as z from 'zod'
 import { CREATE_TAB_FIELDS } from './structured-agent-session-create-tab-params'
+import { CREATE_CHOICE_FIELDS } from './structured-agent-session-create-choice-params'
 import { isStructuredAgentId } from '../agent-session/lifecycle/agent-session-provider-handle-encoding'
 import { normalizeExecutionHostId } from '../execution-host'
 import { AGENT_SESSION_RESPONSE_OPTION_ID_MAX_LENGTH } from '../agent-session/agent-session-question-answer'
@@ -145,8 +146,7 @@ export const CreateIntentParams = z
       })
       .strict()
       .optional(),
-    options: AgentSessionOptions.optional(),
-    optionsMode: z.literal('replace-model-selection').optional()
+    ...CREATE_CHOICE_FIELDS
   })
   .strict()
 

@@ -1,5 +1,5 @@
 import type { RepoProjectHostSetupMethod } from '../../../shared/project-types'
-import type { Repo } from '../../../shared/repo-types'
+import { CLAUDE_ACCOUNT_DEFAULT_PATTERN, type Repo } from '../../../shared/repo-types'
 import { editorFormatterSchema } from '../../../shared/editor-formatter'
 import type { GitRemoteIdentity } from '../../../shared/git/remotes/git-remote-identity'
 import { normalizeRepoBadgeColor } from '../../../shared/repo-badge-color'
@@ -78,6 +78,7 @@ export function sanitizeRepoUpdatesForPersistence<
       | 'worktreeBasePath'
       | 'projectHostSetupMethod'
       | 'forkSyncMode'
+      | 'claudeAccountId'
       | 'agentWorkspaceTrust'
       | 'defaultJiraProject'
       | 'customWorktreeVisibilitySources'
@@ -146,6 +147,13 @@ export function sanitizeRepoUpdatesForPersistence<
     } else {
       sanitized.projectHostSetupMethod = setupMethod
     }
+  }
+  if (
+    'claudeAccountId' in sanitized &&
+    (typeof sanitized.claudeAccountId !== 'string' ||
+      !CLAUDE_ACCOUNT_DEFAULT_PATTERN.test(sanitized.claudeAccountId))
+  ) {
+    delete sanitized.claudeAccountId
   }
   if ('forkSyncMode' in sanitized) {
     const forkSyncMode = sanitizeForkSyncMode(sanitized.forkSyncMode)

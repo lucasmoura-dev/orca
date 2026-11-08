@@ -29,7 +29,7 @@ import {
   getRepositoryAgentTrustSearchEntry,
   RepositoryAgentTrustSection
 } from './RepositoryAgentTrustSection'
-import { RepositoryGitHubAccountSection } from './RepositoryGitHubAccountSection'
+import { RepositoryAccountSections } from './RepositoryAccountSections'
 import { translate } from '@/i18n/i18n'
 import { RepositoryWindowsRuntimeSection } from './execution/RepositoryWindowsRuntimeSection'
 import { matchesRepositoryIdentitySearch } from './identity/repository-identity-search'
@@ -357,7 +357,7 @@ export function RepositoryPane({
               forceVisible={forceFullPaneForRepoMatch}
             />
 
-            <RepositoryGitHubAccountSection
+            <RepositoryAccountSections
               repo={repo}
               updateRepo={updateSelectedRepo}
               forceVisible={forceFullPaneForRepoMatch}

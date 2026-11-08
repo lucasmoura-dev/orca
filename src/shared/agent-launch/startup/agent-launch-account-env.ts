@@ -1,5 +1,6 @@
 /** Desktop account routing for terminal agents on WSL orcad hosts without account services: four variables, absolute POSIX paths (the shell pointer may use ~/). Structured-session homes remain host-derived. */
 
+import { CLAUDE_ACCOUNT_PIN_ENV, claudeAccountChoiceFromPinEnv } from '../../claude-account-pin-env'
 import * as z from 'zod'
 import {
   CLAUDE_INJECTED_CONFIG_DIR_ENV,
@@ -10,7 +11,8 @@ export const AGENT_LAUNCH_ACCOUNT_ENV_KEYS = [
   'CLAUDE_CONFIG_DIR',
   CLAUDE_INJECTED_CONFIG_DIR_ENV,
   CLAUDE_PROFILE_POINTER_ENV,
-  'CODEX_HOME'
+  'CODEX_HOME',
+  CLAUDE_ACCOUNT_PIN_ENV
 ] as const
 
 export type AgentLaunchAccountEnvKey = (typeof AGENT_LAUNCH_ACCOUNT_ENV_KEYS)[number]
@@ -22,6 +24,10 @@ function isAccountEnvKey(key: string): key is AgentLaunchAccountEnvKey {
 }
 
 function isAccountPath(key: AgentLaunchAccountEnvKey, value: string): boolean {
+  if (key === CLAUDE_ACCOUNT_PIN_ENV) {
+    // An account identity, never a path: the host resolves its folder.
+    return claudeAccountChoiceFromPinEnv(value) !== null
+  }
   if (value.length === 0 || value.length > MAX_ACCOUNT_PATH_LENGTH || /[\0\r\n]/.test(value)) {
     return false
   }

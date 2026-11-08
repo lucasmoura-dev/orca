@@ -16,6 +16,8 @@ import { claudeStructuredAuthPolicyForSettings } from './claude-structured-auth-
 import { applyClaudeEnvPatch } from './environment'
 import { withoutInheritedClaudeConfigDir } from '../claude/claude-config-dir-pin'
 
+const RECORDED_HOME = { variable: 'CLAUDE_CONFIG_DIR', path: '/recorded' }
+
 const roots: string[] = []
 afterEach(() => {
   installClaudeProfileRouter(undefined)
@@ -72,7 +74,7 @@ async function launchHomes(f: ReturnType<typeof coveredAccount>) {
     terminal: (await f.router.prepareLaunch()).configDir,
     terminalEnv: withClaudeProfileTerminalEnv<Record<string, string>>({}, { runtime: 'host' })
       .CLAUDE_CONFIG_DIR,
-    chat: await resolveClaudeStructuredLaunchHome(f.router, chatEnv, '/recorded'),
+    chat: await resolveClaudeStructuredLaunchHome(f.router, chatEnv, RECORDED_HOME),
     chatEnv: chatEnv.CLAUDE_CONFIG_DIR,
     chatRecord: await resolveStructuredClaudeAccountHomePath({
       launchEnv: {},
@@ -107,7 +109,7 @@ describe('one router decision for every Claude launch', () => {
       overlay.CLAUDE_CONFIG_DIR
     ])
     expect(prepare).not.toHaveBeenCalled()
-    expect(await resolveClaudeStructuredLaunchHome(f.router, { ...overlay }, '/recorded')).toBe(
+    expect(await resolveClaudeStructuredLaunchHome(f.router, { ...overlay }, RECORDED_HOME)).toBe(
       overlay.CLAUDE_CONFIG_DIR
     )
     signIn(f.accountHome, 'a@example.test')
@@ -115,7 +117,7 @@ describe('one router decision for every Claude launch', () => {
       overlay.CLAUDE_CONFIG_DIR,
       f.accountHome
     ])
-    expect(await resolveClaudeStructuredLaunchHome(f.router, { ...overlay }, '/recorded')).toBe(
+    expect(await resolveClaudeStructuredLaunchHome(f.router, { ...overlay }, RECORDED_HOME)).toBe(
       f.accountHome
     )
     prepare.mockRestore()

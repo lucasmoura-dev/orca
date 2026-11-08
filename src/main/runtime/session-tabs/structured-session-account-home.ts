@@ -5,6 +5,7 @@ import { resolveHostStructuredAgentLaunchEnvironment } from '../agent-session/la
 import { agentWorkspaceTrustDecisionForWorkspace } from '../../agent-launch/trust/agent-workspace-trust-spawn'
 import { OrcaRuntimeWithStructuredSessionCliWriterHost } from './structured-session-cli-writer-host'
 import type { AgentSessionAccountHome } from '../../../shared/agent-session/lifecycle/agent-session-account-home'
+import type { ClaudeAccountPin } from '../../../shared/claude-account-choice'
 import type { AgentSessionRecord } from '../../../shared/agent-session/lifecycle/agent-session-record'
 
 export abstract class OrcaRuntimeWithStructuredSessionAccountHome extends OrcaRuntimeWithStructuredSessionCliWriterHost {
@@ -19,13 +20,18 @@ export abstract class OrcaRuntimeWithStructuredSessionAccountHome extends OrcaRu
     if (!registration) {
       return null
     }
-    return async ({ launchEnv, location }, permissionMode?: string) =>
+    return async (
+      { launchEnv, location },
+      permissionMode?: string,
+      claudeAccount?: ClaudeAccountPin
+    ) =>
       registration.resolveAccountHome(
         {
           launchEnv,
           location: location ?? null,
           purpose,
           ...(permissionMode ? { permissionMode } : {}),
+          ...(claudeAccount ? { claudeAccount } : {}),
           workspacePath:
             purpose === 'launch'
               ? async () =>
@@ -62,7 +68,7 @@ export abstract class OrcaRuntimeWithStructuredSessionAccountHome extends OrcaRu
     purpose: 'read' | 'identity' = 'read'
   ): Promise<AgentSessionAccountHome | null> {
     const { provider, location } = record
-    if (!structuredAgentRuntimeMetadata(provider)?.launchFollowsSelection?.()) {
+    if (!structuredAgentRuntimeMetadata(provider)?.launchFollowsSelection?.(record.accountHome)) {
       return null
     }
     const read = this.structuredAgentAccountHomeResolver(provider, '', purpose)

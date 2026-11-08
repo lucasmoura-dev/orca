@@ -205,6 +205,9 @@ function structuredAgentLaunchState(
   // A fork inherits its source's options.
   intent.explicitLaunchOptions =
     !options.forkFrom && options.launchOptions ? { ...options.launchOptions } : undefined
+  if (options.claudeAccount && !options.forkFrom && !options.resumeFrom) {
+    intent.claudeAccount = options.claudeAccount
+  }
   intent.beforeCreate = options.beforeCreate
   intent.createAfter = options.createAfter
   intent.surfaceAddress = options.surfaceAddress

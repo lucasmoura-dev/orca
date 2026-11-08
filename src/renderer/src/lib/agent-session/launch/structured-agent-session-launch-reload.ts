@@ -47,6 +47,7 @@ export function restorePersistedStructuredLaunchState(
       ...(record.firstMessage ? { firstMessage: record.firstMessage } : {}),
       ...(record.optionsMode ? { optionsMode: record.optionsMode } : {}),
       ...(record.options ? { options: record.options } : {}),
+      ...(record.claudeAccount ? { claudeAccount: record.claudeAccount } : {}),
       ...(record.explicitLaunchOptions
         ? { explicitLaunchOptions: record.explicitLaunchOptions }
         : {}),

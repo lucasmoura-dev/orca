@@ -1,3 +1,7 @@
+import {
+  CLAUDE_ACCOUNT_PIN_ENV,
+  claudeAccountChoiceFromPinEnv
+} from '../../../../shared/claude-account-pin-env'
 import type { RuntimeAccountController } from '../../agent-session/environment/runtime-account-controller'
 import { applyRemoteViewerLaunchEnv } from './remote-viewer-launch-env'
 import type { SessionOptionValue } from '../../../../shared/native-chat/input/native-chat-session-options'
@@ -188,7 +192,9 @@ async function buildRuntimeAgentTerminalStartupOptions(
         ...(opts.extraAgentArgs !== undefined ? { extraAgentArgs: opts.extraAgentArgs } : {}),
         shell: agentLaunchQuotingShell(runtime),
         sessionOptions: sessionOptions ?? host.toSessionOptions(opts.launchPreferences),
-        ...(opts.suppressStartupUpdatePrompt ? { suppressStartupUpdatePrompt: true } : {})
+        ...(opts.suppressStartupUpdatePrompt ? { suppressStartupUpdatePrompt: true } : {}),
+        // A pinned Claude account rides in the launch config, so a restart keeps it.
+        ...claudeAccountStartupInput(opts.accountEnv)
       }),
       opts.env?.PATH
     ),
@@ -303,4 +309,9 @@ export async function prepareHostAgentTerminalLaunch(
   }
   const hostLaunchEnv = accounts.hostLaunchEnvFor(launch.launchAgent)
   return withHostAccountLaunchEnv(opts, launch, hostLaunchEnv)
+}
+
+function claudeAccountStartupInput(accountEnv: Readonly<Record<string, string>> | undefined) {
+  const claudeAccount = claudeAccountChoiceFromPinEnv(accountEnv?.[CLAUDE_ACCOUNT_PIN_ENV])
+  return claudeAccount ? { claudeAccount } : {}
 }

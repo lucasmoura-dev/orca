@@ -1,7 +1,10 @@
 import { AtRestCommandDemand } from './at-rest-command-demand'
 import type { AgentSessionRecord } from '../../../../shared/agent-session/lifecycle/agent-session-record'
 import type { AgentSessionSlashCommand } from '../../../../shared/agent-session/agent-session-wire'
-import type { AgentSessionAccountHome } from '../../../../shared/agent-session/lifecycle/agent-session-account-home'
+import {
+  agentSessionClaudeAccountPin,
+  type AgentSessionAccountHome
+} from '../../../../shared/agent-session/lifecycle/agent-session-account-home'
 import { agentSessionPinnedLaunchDirectory } from '../../../runtime/agent-session/records/agent-session-record-launch-directory'
 import type {
   AtRestCommandChange,
@@ -162,8 +165,10 @@ export class AtRestCommandCatalog implements StructuredAgentSessionAtRestCommand
   private key(record: AgentSessionRecord): string {
     return JSON.stringify([
       record.provider,
-      // A selected account changes through retireContext, not per chat.
-      this.source.resolveAccountHome ? null : record.accountHome,
+      // A selected account changes through retireContext, not per chat; a pinned chat keeps its own.
+      this.source.resolveAccountHome && !agentSessionClaudeAccountPin(record.accountHome)
+        ? null
+        : record.accountHome,
       record.location.workspaceId,
       agentSessionPinnedLaunchDirectory(record)
     ])
@@ -242,8 +247,9 @@ export class AtRestCommandCatalog implements StructuredAgentSessionAtRestCommand
         }
         throw error
       })
-      const accountHome =
-        (await wait(Promise.resolve(this.source.resolveAccountHome?.()))) ?? record.accountHome
+      const accountHome = agentSessionClaudeAccountPin(record.accountHome)
+        ? record.accountHome
+        : ((await wait(Promise.resolve(this.source.resolveAccountHome?.()))) ?? record.accountHome)
       const chat = { ...record, accountHome }
       attempt.signal.throwIfAborted()
       if (!directory?.isDirectory()) {

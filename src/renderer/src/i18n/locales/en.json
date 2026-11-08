@@ -19752,6 +19752,7 @@
         "historyInOtherAccount": "This chat's history is in another Claude account. Switch back to that account to continue it.",
         "claudeAccountFolderMissing": "The selected Claude account's folder is missing. Sign in to it again or choose another account.",
         "claudeAccountSetupFailed": "The selected Claude account could not be set up. Try again or choose another account.",
+        "claudeAccountRemoved": "This chat's Claude account was removed from Orca. Add it again in Settings, or start a new chat on another account.",
         "agentCommandNotRunnable": "{{agent}}'s Command in Settings → Agents must start with a program Orca can find. Variables, pipes and other shell syntax aren't supported; use the Environment setting for variables. Change it or reset it.",
         "runtimeNotInstalled": "{{agent}} isn't installed on the computer running this chat. Install it from the chat in a current version of Orca.",
         "fullAccessAsRoot": "{{agent}} won't use Full access while it runs as root. Choose another permission for {{agent}} in Settings → Agents for the computer running this chat, then start a new chat.",
@@ -23253,6 +23254,13 @@
   "nativeChat": {
     "math": {
       "scrollDisplayEquation": "Scroll display equation"
+    },
+    "claudeAccount": {
+      "removed": "Removed from Orca",
+      "needsSignIn": "Needs sign-in",
+      "systemTooltip": "This chat runs on this device's System default Claude login. Switching accounts elsewhere does not move it.",
+      "managedTooltip": "This chat runs on this Claude account. Switching accounts elsewhere does not move it.",
+      "fixTooltip": "Open Accounts to sign in to this account or add it again. Orca never moves this chat to another account."
     }
   },
   "quitAndStopAllSessions": {
@@ -23773,7 +23781,11 @@
     "use": "Use",
     "select": "Select agent",
     "promptPlaceholder": "Add a prompt (optional): / for skills, @ for files",
-    "promptPlaceholderFilesOnly": "Add a prompt (optional): @ for files"
+    "promptPlaceholderFilesOnly": "Add a prompt (optional): @ for files",
+    "claudeAccount": {
+      "label": "Account",
+      "systemDefaultWithEmail": "System default ({{email}})"
+    }
   },
   "automations": {
     "runFailures": {
@@ -24235,5 +24247,16 @@
     "stopped": "{{host}} stopped controlling browser tabs until Orca restarts.",
     "disallowed": "{{host}} can no longer control browser tabs. Turn it back on in Settings > SSH.",
     "failed": "Couldn’t stop {{host}}. Turn off its browser control in Settings > SSH."
+  },
+  "repository": {
+    "claudeAccount": {
+      "title": "Claude Account",
+      "description": "The Claude account new chats in this project start on.",
+      "longDescription": "New Claude chats in this project start on this account unless you pick another when you start them. Existing chats keep the account they started on.",
+      "selectLabel": "Account",
+      "inherit": "Use the selected account",
+      "removed": "Removed account",
+      "removedHint": "This account was removed, so new chats here use the selected account."
+    }
   }
 }

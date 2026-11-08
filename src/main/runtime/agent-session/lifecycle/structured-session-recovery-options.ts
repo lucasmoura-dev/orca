@@ -97,7 +97,7 @@ export async function structuredSessionRecoveryOptions(
       router &&
       record.provider === 'claude' &&
       record.location.wslDistro === null &&
-      metadata.launchFollowsSelection?.()
+      metadata.launchFollowsSelection?.(record.accountHome)
     ) {
       try {
         const roots = await Promise.all(

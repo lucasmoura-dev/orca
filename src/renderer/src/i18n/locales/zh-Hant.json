@@ -18978,6 +18978,7 @@
         "historyInOtherAccount": "此聊天的歷史記錄位於另一個 Claude 帳戶中。請切換回該帳戶以繼續此聊天。",
         "claudeAccountFolderMissing": "所選 Claude 帳戶的資料夾不存在。請重新登入該帳戶或選擇其他帳戶。",
         "claudeAccountSetupFailed": "無法設定所選 Claude 帳戶。請重試或選擇其他帳戶。",
+        "claudeAccountRemoved": "This chat's Claude account was removed from Orca. Add it again in Settings, or start a new chat on another account.",
         "agentCommandNotRunnable": "{{agent}} 在「設定 → 代理程式」中的命令必須是 Orca 能找到的程式路徑或名稱，且不能包含引數或變數。請修改或重設。",
         "runtimeNotInstalled": "執行此聊天的電腦上未安裝 {{agent}}。請在新版 Orca 中從聊天裡安裝。",
         "fullAccessAsRoot": "{{agent}} 以 root 身分執行時不會使用「完整存取權」。請在執行此聊天的電腦上，前往「設定 → 代理程式」為 {{agent}} 選擇其他權限，然後開始新的聊天。",

@@ -1,3 +1,4 @@
+import type { ClaudeAccountPin } from '../../../../shared/claude-account-choice'
 import type { AgentSessionExecutionLocation } from '../../../../shared/agent-session/lifecycle/agent-session-record'
 import type { AgentSessionAccountHome } from '../../../../shared/agent-session/lifecycle/agent-session-account-home'
 import type { applyStructuredCodexWorkspaceTrust } from '../../../agent-launch/trust/agent-workspace-trust-spawn'
@@ -52,6 +53,8 @@ export type StructuredAgentAccountHomeRequest = {
   workspacePath: (() => Promise<string>) | null
   /** The permission mode a new chat starts in, when it names one. */
   permissionMode?: string
+  /** Claude only: the account a new chat pins instead of following the selection. */
+  claudeAccount?: ClaudeAccountPin
 }
 
 /** What resolving an account may ask of the runtime around it. */
@@ -137,7 +140,7 @@ export type StructuredAgentRuntimeMetadata = StructuredAgentCliConversations & {
   ) => Promise<AgentSessionAccountHome>
   /** Whether a start of an existing chat launches under the account `resolveAccountHome` picks now
    *  rather than the one its record pins; absent keeps the record's. */
-  launchFollowsSelection?: () => boolean
+  launchFollowsSelection?: (accountHome: AgentSessionAccountHome) => boolean
 }
 
 export type StructuredAgentRuntimeRegistration = StructuredAgentRuntimeMetadata & {

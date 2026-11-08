@@ -6,6 +6,12 @@ import type { ClaudeWslProfileRouter } from './claude-profile-wsl-router'
 import type { ClaudeAccountSelectionTarget } from './runtime-selection'
 import type { ClaudeObservedConfigDirs } from './claude-observed-config-dirs'
 
+import {
+  CLAUDE_ACCOUNT_PIN_ENV,
+  claudeAccountChoiceFromPinEnv
+} from '../../shared/claude-account-pin-env'
+import { claudePinnedTerminalEnv } from './claude-pinned-terminal-env'
+
 let installed: ClaudeProfileRouter | undefined
 
 /** Installed only in the desktop process. */
@@ -37,11 +43,15 @@ export function getClaudeWslProfileRouter(): ClaudeWslProfileRouter | undefined 
   return installedWsl
 }
 
+/** A launch pinned to an account (`ORCA_CLAUDE_ACCOUNT_PIN`) keeps it; others follow the selection. */
 export function withClaudeProfileTerminalEnv<Env extends Record<string, string> | undefined>(
   env: Env,
   target: ClaudeAccountSelectionTarget
 ): Env | Record<string, string> {
-  const profileEnv = installed?.terminalEnv(target)
+  const pin =
+    target.runtime === 'wsl' ? null : claudeAccountChoiceFromPinEnv(env?.[CLAUDE_ACCOUNT_PIN_ENV])
+  const profileEnv =
+    pin && installed ? claudePinnedTerminalEnv(installed, pin) : installed?.terminalEnv(target)
   return profileEnv ? { ...env, ...profileEnv } : env
 }
 

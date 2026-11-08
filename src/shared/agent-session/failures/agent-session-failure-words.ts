@@ -150,7 +150,7 @@ function couldNot(verb: 'couldNotStart' | 'couldNotRestart'): Sentence {
   }
 }
 
-const FAILURE_SENTENCES = {
+const FAILURE_SENTENCES: Record<AgentSessionFailureKind, Sentence> = {
   providerStartFailed: (context, _fact, _surface, say) =>
     joinSentences([say('providerStartFailed', agent(say, context)), ...startRetry(say, context)]),
   savedConversationMissing: (context, _fact, _surface, say) =>
@@ -166,6 +166,7 @@ const FAILURE_SENTENCES = {
   historyInOtherAccount: (_context, _fact, _surface, say) => say('historyInOtherAccount'),
   claudeAccountFolderMissing: (_context, _fact, _surface, say) => say('claudeAccountFolderMissing'),
   claudeAccountSetupFailed: (_context, _fact, _surface, say) => say('claudeAccountSetupFailed'),
+  claudeAccountRemoved: (_context, _fact, _surface, say) => say('claudeAccountRemoved'),
   agentCommandNotRunnable: namingAgent('agentCommandNotRunnable'),
   runtimeNotInstalled: namingAgent('runtimeNotInstalled'),
   fullAccessAsRoot: namingAgent('fullAccessAsRoot'),
@@ -279,7 +280,7 @@ const FAILURE_SENTENCES = {
     }),
   previousExitUnverifiable: namingAgent('previousExitUnverifiable'),
   sessionNotRestored: namingAgent('sessionNotRestored')
-} satisfies Record<AgentSessionFailureKind, Sentence>
+}
 
 /** The sentence a person reads for this fact on this surface; never a marker. */
 export function agentSessionFailureSentence(
@@ -289,8 +290,7 @@ export function agentSessionFailureSentence(
   /** Desktop passes its translations; the host and the phone keep English. */
   say: AgentSessionFailureSay = sayAgentSessionFailureEnglish
 ): string {
-  const sentence: Sentence = FAILURE_SENTENCES[fact.kind]
-  return sentence(context, fact, surface, say)
+  return FAILURE_SENTENCES[fact.kind](context, fact, surface, say)
 }
 
 /** Preserve markers released clients hide. A write failure keeps the bare marker; its error stays in the log. */

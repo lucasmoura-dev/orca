@@ -1,3 +1,4 @@
+import type { ClaudeAccountChoice } from '../../../../../shared/claude-account-choice'
 import type { StructuredAgentLaunchReceipt } from './structured-agent-session-launch-recovery'
 import type { StructuredLaunchSurfaceAddress } from './structured-agent-session-launch-record'
 import {
@@ -33,6 +34,8 @@ export type StructuredAgentLaunchOptions = StructuredLaunchPromptOptions & {
   hostSeedOptions?: Readonly<Record<string, string>>
   /** Explicit encoded action input, captured durably before any asynchronous preparation. */
   launchOptions?: Readonly<Record<string, string>>
+  /** The Claude account a new chat pins. */
+  claudeAccount?: ClaudeAccountChoice
   /** Final admission of a source-bound action, immediately before its first create is sent. */
   beforeCreate?: () => boolean
   /** The create waits for this (a source that must stop before the chat writes). */

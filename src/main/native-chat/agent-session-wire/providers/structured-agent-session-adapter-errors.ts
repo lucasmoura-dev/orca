@@ -43,6 +43,7 @@ export type AgentSessionPreSpawnReason = Extract<
   | 'historyInOtherAccount'
   | 'claudeAccountFolderMissing'
   | 'claudeAccountSetupFailed'
+  | 'claudeAccountRemoved'
   | 'agentCommandNotRunnable'
   | 'cliMissing'
   | 'runtimeNotInstalled'

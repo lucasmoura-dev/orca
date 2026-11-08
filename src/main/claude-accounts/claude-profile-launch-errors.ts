@@ -1,4 +1,5 @@
 import {
+  CLAUDE_ACCOUNT_REMOVED_MESSAGE,
   CLAUDE_PROFILE_MISSING_MESSAGE,
   CLAUDE_PROFILE_SETUP_FAILED_MESSAGE
 } from '../../shared/claude-profile-routing'
@@ -14,5 +15,12 @@ export function claudeProfileMissing(): AgentSessionPreSpawnError {
 export function claudeProfileSetupFailed(): AgentSessionPreSpawnError {
   return new AgentSessionPreSpawnError(new Error(CLAUDE_PROFILE_SETUP_FAILED_MESSAGE), {
     reason: 'claudeAccountSetupFailed'
+  })
+}
+
+/** A chat pinned to an account that is no longer saved never falls back to another one. */
+export function claudeAccountRemoved(): AgentSessionPreSpawnError {
+  return new AgentSessionPreSpawnError(new Error(CLAUDE_ACCOUNT_REMOVED_MESSAGE), {
+    reason: 'claudeAccountRemoved'
   })
 }

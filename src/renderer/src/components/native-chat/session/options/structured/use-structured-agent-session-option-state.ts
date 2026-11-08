@@ -101,6 +101,7 @@ export function useStructuredAgentSessionOptionState(args: {
             contextUsage: acceptedSupport.result.contextUsage,
             acceptsImages: acceptedSupport.result.acceptsImages,
             canSwitchAccount: acceptedSupport.result.canSwitchAccount === true,
+            claudeAccount: acceptedSupport.result.claudeAccount,
             rewind: acceptedSupport.result.rewind ?? {
               supported: false as const,
               reason: 'unsupported' as const
@@ -247,7 +248,8 @@ export function useStructuredAgentSessionOptionState(args: {
     conversationSupport: support,
     sessionSupport: {
       acceptsImages: support?.acceptsImages,
-      canSwitchAccount: support?.canSwitchAccount
+      canSwitchAccount: support?.canSwitchAccount,
+      claudeAccount: support?.claudeAccount
     },
     rereadOptions,
     receiveCatalog,

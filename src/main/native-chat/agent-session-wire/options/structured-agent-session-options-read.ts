@@ -1,3 +1,5 @@
+import { readClaudeChatAccount } from '../../../claude-accounts/claude-chat-account-view'
+import { getClaudeProfileRouter } from '../../../claude-accounts/claude-profile-installed-router'
 import { readAcpForkSupport } from '../../../acp/acp-fork-support'
 import { supportsSessionAccountUsage } from '../../../../shared/agent-session/agent-session-account-usage'
 import { structuredAgentSessionCatalogScopeOwned } from './structured-agent-session-catalog-reads'
@@ -237,9 +239,13 @@ export async function readStructuredAgentSessionOptions(
     }
   }
   const recovery = await readStructuredSessionRecovery(session, context, sessionId)
+  const claudeAccount = record
+    ? await readClaudeChatAccount(record, getClaudeProfileRouter())
+    : undefined
   return {
     ...options,
     ...recovery,
+    ...(claudeAccount ? { claudeAccount } : {}),
     forkSupport:
       capabilities?.fork === 'checkpoint'
         ? 'supported'

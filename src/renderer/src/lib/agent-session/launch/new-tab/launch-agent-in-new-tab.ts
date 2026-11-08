@@ -1,5 +1,5 @@
 import {
-  launchNewTabPromptThroughHost,
+  launchNewTabArgsPromptThroughHost,
   newTabPromptLaunchesThroughHost
 } from '@/lib/agent-session/launch/new-tab/launch-agent-new-tab-host-route'
 import type { LaunchAgentInNewTabArgs } from '@/lib/agent-session/launch/new-tab/launch-agent-in-new-tab-args'
@@ -115,6 +115,7 @@ function openAgentInNewTab(
     ...(args.chatSessionOptions !== undefined
       ? { chatLaunchOptions: args.chatSessionOptions }
       : {}),
+    ...(args.claudeAccount ? { claudeAccount: args.claudeAccount } : {}),
     onPromptDelivered,
     ...(args.promptKeptByCaller ? { promptKeptByCaller: true as const } : {})
   })
@@ -172,7 +173,8 @@ function openAgentInNewTab(
         sessionOptionsYieldToAgentArgs: args.sessionOptionsYieldToAgentArgs,
         platform: resolvedLaunchPlatform,
         shell: queuedShell,
-        isRemote
+        isRemote,
+        ...(args.claudeAccount ? { claudeAccount: args.claudeAccount } : {})
       }),
       prompt: trimmedPrompt,
       promptDelivery,
@@ -186,6 +188,7 @@ function openAgentInNewTab(
     }
     const webHostDelivery = launchAgentInWebHostTab({
       agent,
+      ...(args.claudeAccount ? { claudeAccount: args.claudeAccount } : {}),
       worktreeId,
       environmentId: runtimeEnvironmentId,
       workspaceExecutionHostId: args.workspaceExecutionHostId,
@@ -228,23 +231,10 @@ function openAgentInNewTab(
     pasteDraftAfterLaunch !== null &&
     newTabPromptLaunchesThroughHost({ promptDelivery, pastesPrompt: true, isRemote })
   ) {
-    const launched = launchNewTabPromptThroughHost({
-      agent,
-      worktreeId,
-      ...(groupId ? { groupId } : {}),
+    const launched = launchNewTabArgsPromptThroughHost(args, {
       prompt: trimmedPrompt,
-      ...(agentArgs !== undefined ? { agentArgs } : {}),
-      ...(sessionOptions ? { sessionOptions } : {}),
-      ...(initialCwd?.trim() ? { cwd: initialCwd } : {}),
-      ...(trustWorktreeId ? { trustWorktreeId } : {}),
-      launchSource: launchSource ?? 'tab_bar_quick_launch',
-      quickCommandLabel,
-      ...(activate === false ? { activate: false } : {}),
-      ...(pendingActivationSpawn ? { pendingActivationSpawn: true } : {}),
       pasteContent: pasteDraftAfterLaunch,
-      submit: submitPastedPrompt,
-      ...(onPromptDelivered ? { onPromptDelivered } : {}),
-      ...(onPromptDeliveryUnconfirmed ? { onPromptDeliveryUnconfirmed } : {})
+      submit: submitPastedPrompt
     })
     return {
       surface: { kind: 'local-terminal', tabId: launched.tabId },

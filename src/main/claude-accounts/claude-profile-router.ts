@@ -12,7 +12,8 @@ import {
   CLAUDE_PROFILE_SETUP_FAILED_MESSAGE,
   CLAUDE_USER_CONFIG_DIR_ENV
 } from '../../shared/claude-profile-routing'
-import { claudeProfileMissing } from './claude-profile-launch-errors'
+import { claudeAccountRemoved, claudeProfileMissing } from './claude-profile-launch-errors'
+import type { ClaudeAccountChoice } from '../../shared/claude-account-choice'
 import type { GlobalSettings } from '../../shared/global-settings-types'
 import type { ClaudeManagedAccount } from '../../shared/managed-account-types'
 import { probeRecentClaudeCliVersion } from '../claude/claude-hook-event-versions'
@@ -44,6 +45,8 @@ import {
   type ClaudeFolderLogin
 } from './claude-account-folder'
 import { resolveLoginShellEnvironment } from '../startup/login-shell-environment'
+
+type RouteCheck = 'checked' | 'identity'
 
 export type ClaudeProfileRouterSettings = Pick<
   GlobalSettings,
@@ -98,8 +101,21 @@ export class ClaudeProfileRouter {
     return id ? this.describe(id) : null
   }
 
-  private routedProfile(): ClaudeProfileDescriptor | null {
-    const profile = this.selectedProfile()
+  /** The profile `choice` names, or the selection without one. A pinned account that left the
+   *  roster throws: falling back would run the chat on another account. */
+  profileFor(choice?: ClaudeAccountChoice): ClaudeProfileDescriptor | null {
+    if (choice?.kind === 'managed' && !this.savedAccount(choice.accountId)) {
+      throw claudeAccountRemoved()
+    }
+    return choice
+      ? choice.kind === 'managed'
+        ? this.describe(choice.accountId)
+        : null
+      : this.selectedProfile()
+  }
+
+  private routedProfile(choice?: ClaudeAccountChoice): ClaudeProfileDescriptor | null {
+    const profile = this.profileFor(choice)
     return profile && !this.coveredBySystemDefault(profile.accountId) ? profile : null
   }
 
@@ -131,8 +147,8 @@ export class ClaudeProfileRouter {
 
   /** Never fall back from a missing folder: that would run the wrong account. `identity` names
    *  the selected route before its folder exists; launches and reads still check availability. */
-  routedHome(availability: 'checked' | 'identity' = 'checked'): string | null {
-    const home = this.routedProfile()?.home ?? null
+  routedHome(availability: RouteCheck = 'checked', choice?: ClaudeAccountChoice): string | null {
+    const home = this.routedProfile(choice)?.home ?? null
     if (availability === 'checked' && home !== null && !isDirectory(home)) {
       throw claudeProfileMissing()
     }
@@ -172,24 +188,24 @@ export class ClaudeProfileRouter {
   }
 
   /** Initial setup must succeed; later refreshes may time out without blocking launch. */
-  async prepareLaunch(): Promise<ClaudeRuntimeAuthPreparation> {
-    const selected = this.selectedProfile()
+  async prepareLaunch(choice?: ClaudeAccountChoice): Promise<ClaudeRuntimeAuthPreparation> {
+    const selected = this.profileFor(choice)
     // Only fallback routing needs the shell env; account setup waits for it separately.
     if (!selected || !this.accountLogin(selected.accountId)) {
       await this.envReady
     }
     // Login changes since publication can change the route.
     this.writePointer()
-    const profile = this.routedProfile()
+    const profile = this.routedProfile(choice)
     if (!profile) {
-      return this.preparation()
+      return this.preparation(choice)
     }
     await prepareClaudeProfileForLaunch(
       profile,
       (value) => this.setUp(value),
       this.args.refreshWaitMs
     )
-    return this.preparation()
+    return this.preparation(choice)
   }
 
   accountHome(accountId: string): string {
@@ -259,10 +275,11 @@ export class ClaudeProfileRouter {
     return report
   }
 
-  launchEnv(): ClaudeEnvPatch {
-    const home = this.routedHome()
+  /** A pinned launch omits the pointer so nothing inside it re-reads the selection. */
+  launchEnv(choice?: ClaudeAccountChoice): ClaudeEnvPatch {
+    const home = this.routedHome('checked', choice)
     return {
-      [CLAUDE_PROFILE_POINTER_ENV]: this.pointerPath,
+      ...(choice ? {} : { [CLAUDE_PROFILE_POINTER_ENV]: this.pointerPath }),
       // Preserve the user's inherited CLAUDE_CONFIG_DIR for System default.
       ...(home ? { CLAUDE_CONFIG_DIR: home, [CLAUDE_INJECTED_CONFIG_DIR_ENV]: home } : {})
     }
@@ -297,15 +314,15 @@ export class ClaudeProfileRouter {
     }
   }
 
-  preparation(): ClaudeRuntimeAuthPreparation {
-    const profile = this.routedProfile()
-    const home = this.routedHome()
+  preparation(choice?: ClaudeAccountChoice): ClaudeRuntimeAuthPreparation {
+    const profile = this.routedProfile(choice)
+    const home = this.routedHome('checked', choice)
     return {
       configDir: home ?? this.systemDefaultHome(),
       runtime: 'host',
       wslDistro: null,
       wslLinuxConfigDir: null,
-      envPatch: this.launchEnv(),
+      envPatch: this.launchEnv(choice),
       provenance: home ? `profile:${profile?.accountId}` : 'system'
     }
   }

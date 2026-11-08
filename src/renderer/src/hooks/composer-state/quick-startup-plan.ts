@@ -59,7 +59,10 @@ export function buildQuickComposerStartup(input: QuickComposerStartupInput): Qui
           sessionOptions: input.launchInputs?.sessionOptions,
           platform: requireExecutionHostPlatform(input.launchHost),
           shell: input.shell ?? undefined,
-          isRemote: input.isRemote
+          isRemote: input.isRemote,
+          ...(input.launchInputs?.claudeAccount
+            ? { claudeAccount: input.launchInputs.claudeAccount }
+            : {})
         })
   const promptPlan = inputs
     ? planLaunchAgentStartupPrompt({

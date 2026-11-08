@@ -51,7 +51,8 @@ export function useNativeChatStructuredPaneNotices({
     ...props,
     worktreeId: ownerWorktreeId,
     failure: provisionalLaunch.failure,
-    startFailures
+    startFailures,
+    ...(controller.claudeAccount ? { claudeAccount: controller.claudeAccount } : {})
   })
   const availability = useNativeChatAvailabilityNotice({
     unavailable: controller.unavailable,

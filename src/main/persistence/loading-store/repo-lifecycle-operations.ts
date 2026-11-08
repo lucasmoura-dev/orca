@@ -189,6 +189,7 @@ export class RepoLifecycleOperations {
         | 'symlinkPaths'
         | 'issueSourcePreference'
         | 'forkSyncMode'
+        | 'claudeAccountId'
         | 'agentWorkspaceTrust'
         | 'externalWorktreeVisibilityPromptDismissedAt'
         | 'externalWorktreeInboxBaselinePaths'

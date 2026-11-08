@@ -12,3 +12,6 @@ export const CLAUDE_PROFILE_MISSING_MESSAGE =
 
 export const CLAUDE_PROFILE_SETUP_FAILED_MESSAGE =
   'The selected Claude account could not be set up. Try again or choose another account.'
+
+export const CLAUDE_ACCOUNT_REMOVED_MESSAGE =
+  "This chat's Claude account was removed from Orca. Add it again in Settings, or start a new chat on another account."

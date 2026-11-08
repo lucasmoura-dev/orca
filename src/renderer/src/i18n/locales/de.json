@@ -19239,6 +19239,7 @@
         "historyInOtherAccount": "Der Verlauf dieses Chats befindet sich in einem anderen Claude-Konto. Zu diesem Konto zurückwechseln, um den Chat fortzusetzen.",
         "claudeAccountFolderMissing": "Der Ordner des ausgewählten Claude-Kontos fehlt. Erneut bei diesem Konto anmelden oder ein anderes Konto auswählen.",
         "claudeAccountSetupFailed": "Das ausgewählte Claude-Konto konnte nicht eingerichtet werden. Erneut versuchen oder ein anderes Konto auswählen.",
+        "claudeAccountRemoved": "This chat's Claude account was removed from Orca. Add it again in Settings, or start a new chat on another account.",
         "agentCommandNotRunnable": "Der Befehl für {{agent}} unter Einstellungen → Agenten muss ein Programmpfad oder -name sein, den Orca finden kann, ohne Argumente oder Variablen. Den Befehl ändern oder zurücksetzen.",
         "runtimeNotInstalled": "{{agent}} ist auf dem Computer, auf dem dieser Chat läuft, nicht installiert. Die Installation über den Chat in einer aktuellen Orca-Version durchführen.",
         "fullAccessAsRoot": "{{agent}} verwendet keinen Vollzugriff, solange die Ausführung als root erfolgt. Unter Einstellungen → Agenten für den Computer, auf dem dieser Chat läuft, eine andere Berechtigung für {{agent}} auswählen und anschließend einen neuen Chat starten.",

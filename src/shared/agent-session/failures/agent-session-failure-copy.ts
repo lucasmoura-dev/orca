@@ -1,6 +1,7 @@
 import {
   CLAUDE_PROFILE_MISSING_MESSAGE,
-  CLAUDE_PROFILE_SETUP_FAILED_MESSAGE
+  CLAUDE_PROFILE_SETUP_FAILED_MESSAGE,
+  CLAUDE_ACCOUNT_REMOVED_MESSAGE
 } from '../../claude-profile-routing'
 import type { AgentSessionRefusalReference } from './agent-session-wire-refusals'
 import type { AgentCliInstallationProblem } from '../../agent-launch/catalog/agent-cli-installation-problem'
@@ -79,6 +80,7 @@ export const AGENT_SESSION_FAILURE_COPY = {
     "This chat's history is in another Claude account. Switch back to that account to continue it.",
   claudeAccountFolderMissing: CLAUDE_PROFILE_MISSING_MESSAGE,
   claudeAccountSetupFailed: CLAUDE_PROFILE_SETUP_FAILED_MESSAGE,
+  claudeAccountRemoved: CLAUDE_ACCOUNT_REMOVED_MESSAGE,
   agentCommandNotRunnable:
     "{{agent}}'s Command in Settings → Agents must start with a program Orca can find. Variables, pipes and other shell syntax aren't supported; use the Environment setting for variables. Change it or reset it.",
   runtimeNotInstalled:

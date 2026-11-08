@@ -1,3 +1,4 @@
+import type { ClaudeAccountChoice } from '../claude-account-choice'
 import type { StructuredAgentId } from './lifecycle/agent-session-provider-handle'
 import type { AgentSessionMutationEnvelope } from './agent-session-wire'
 import type { z } from 'zod'
@@ -32,6 +33,8 @@ export type StructuredAgentSessionCreateParams = {
   options?: Readonly<Record<string, string>>
   /** Sent only to a host advertising `AGENT_SESSION_CREATE_TAB_PLACEMENT_RUNTIME_CAPABILITY`. */
   tabPlacement?: { groupId?: string; afterTabId?: string }
+  /** Sent only to a host advertising `AGENT_SESSION_CREATE_CLAUDE_ACCOUNT_RUNTIME_CAPABILITY`. */
+  claudeAccount?: ClaudeAccountChoice
 }
 
 export type StructuredAgentSessionFirstMessage = {
@@ -65,6 +68,7 @@ export function structuredAgentSessionCreateParams(args: {
   firstMessage?: StructuredAgentSessionFirstMessage
   optionsMode?: 'replace-model-selection'
   options?: Readonly<Record<string, string>>
+  claudeAccount?: ClaudeAccountChoice
   /** A display hint, outside the fingerprint: a retry may name a place that moved. */
   tabPlacement?: StructuredAgentSessionCreateParams['tabPlacement']
   randomUuid: () => string
@@ -81,7 +85,8 @@ export function structuredAgentSessionCreateParams(args: {
     ...(args.tabId ? { tabId: args.tabId } : {}),
     ...(args.firstMessage ? { firstMessage: args.firstMessage } : {}),
     ...(args.optionsMode ? { optionsMode: args.optionsMode } : {}),
-    ...(args.options ? { options: args.options } : {})
+    ...(args.options ? { options: args.options } : {}),
+    ...(args.claudeAccount ? { claudeAccount: args.claudeAccount } : {})
   }
   return {
     envelope: {

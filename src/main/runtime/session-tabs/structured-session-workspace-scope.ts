@@ -1,3 +1,6 @@
+import type { ClaudeAccountChoice, ClaudeAccountPin } from '../../../shared/claude-account-choice'
+import { resolveClaudeChatAccountPin } from '../../claude-accounts/claude-chat-account-pin'
+import { getClaudeProfileRouter } from '../../claude-accounts/claude-profile-installed-router'
 import { prepareStructuredWorkspaceAuthority } from './structured-workspace-authority'
 import type { AgentSessionExecutionLocation } from '../../../shared/agent-session/lifecycle/agent-session-record'
 import { OrcaRuntimeWithStructuredSessionAccountHome } from './structured-session-account-home'
@@ -59,6 +62,35 @@ export abstract class StructuredSessionWorkspaceScope extends OrcaRuntimeWithStr
       ? await host.attentionReads.workspace(worktree)
       : (await this.openAgentSessionRecordStore()).workspaceAttentionReads(worktree)
     return { worktree, reads }
+  }
+
+  /** The account a new host Claude chat pins; adoption keeps its transcript's own account. */
+  protected async structuredClaudeAccountPinForCreate(
+    input: {
+      agent: string
+      worktree: string
+      resumeFrom?: unknown
+      claudeAccount?: ClaudeAccountChoice
+    },
+    location: Pick<AgentSessionExecutionLocation, 'wslDistro'>,
+    settings: Parameters<typeof resolveClaudeChatAccountPin>[0]['settings']
+  ): Promise<ClaudeAccountPin | undefined> {
+    if (
+      input.agent !== 'claude' ||
+      input.resumeFrom ||
+      location.wslDistro !== null ||
+      !getClaudeProfileRouter()
+    ) {
+      return undefined
+    }
+    const target = await this.resolveRuntimeFileTarget(input.worktree)
+    const routing = resolveWorktreeHostRouting(this.store?.getRepos() ?? [], target.worktree)
+    const workspaceDefault = routing.kind === 'resolved' ? routing.repo?.claudeAccountId : undefined
+    return resolveClaudeChatAccountPin({
+      ...(input.claudeAccount ? { explicit: input.claudeAccount } : {}),
+      ...(workspaceDefault ? { workspaceDefault } : {}),
+      settings
+    })
   }
 
   protected async resolveStructuredAgentSessionLocation(worktreeSelector: string) {

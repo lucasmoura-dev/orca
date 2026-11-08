@@ -52,12 +52,13 @@ export type AgentSessionLaunchRequest = AgentLaunchRouteArgs & {
   /** Options this launch asks for over the saved chat defaults, e.g. an action's model. */
   launchOptions?: Readonly<Record<string, string>>
   chatLaunchOptions?: Readonly<Record<string, string>>
+  claudeAccount?: StructuredAgentLaunchOptions['claudeAccount']
 }
 
 /** Carry the decided route and delivery fields in memory so post-create launches and same-session retries reuse them without re-resolving. */
 export type AgentSessionLaunchVerdict = Pick<
   StructuredAgentLaunchOptions,
-  'promptAttachments' | 'promptSkills' | 'preparePrompt'
+  'promptAttachments' | 'promptSkills' | 'preparePrompt' | 'claudeAccount'
 > & {
   route: AgentLaunchRoute
   requestedSurface?: AgentLaunchSurface
@@ -118,7 +119,8 @@ function structuredLaunchOptions(verdict: AgentSessionLaunchVerdict): Structured
     ...(verdict.executionHostId ? { executionHostId: verdict.executionHostId } : {}),
     ...(verdict.chatLaunchOptions !== undefined || verdict.launchOptions !== undefined
       ? { launchOptions: verdict.chatLaunchOptions ?? verdict.launchOptions }
-      : {})
+      : {}),
+    ...(verdict.claudeAccount ? { claudeAccount: verdict.claudeAccount } : {})
   }
 }
 
@@ -321,6 +323,7 @@ export function planAgentSessionLaunch(
     ...(request.launchOptions ? { launchOptions: request.launchOptions } : {}),
     ...(request.chatLaunchOptions !== undefined
       ? { chatLaunchOptions: request.chatLaunchOptions }
-      : {})
+      : {}),
+    ...(request.claudeAccount ? { claudeAccount: request.claudeAccount } : {})
   })
 }

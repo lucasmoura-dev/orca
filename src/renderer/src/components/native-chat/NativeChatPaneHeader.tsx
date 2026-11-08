@@ -1,3 +1,5 @@
+import type { AgentSessionClaudeAccount } from '../../../../shared/claude-account-choice'
+import { NativeChatClaudeAccountLabel } from './NativeChatClaudeAccountLabel'
 import { Fragment } from 'react'
 import { MessageSquarePlus, SquareSplitVertical } from 'lucide-react'
 import { ShortcutKeyCombo } from '@/components/ShortcutKeyCombo'
@@ -27,7 +29,8 @@ export function NativeChatPaneHeader({
   nativeChat,
   focused,
   colorScheme,
-  handOff
+  handOff,
+  claudeAccount
 }: {
   tabId: string
   worktreeId: string
@@ -36,6 +39,7 @@ export function NativeChatPaneHeader({
   focused: boolean
   colorScheme: React.CSSProperties['colorScheme']
   handOff?: NativeChatHeaderHandOff
+  claudeAccount?: AgentSessionClaudeAccount
 }): React.JSX.Element {
   const actions = useStructuredChatPaneActions(tabId, worktreeId, groupId)
   const documentDark = useDocumentDarkTheme()
@@ -57,6 +61,7 @@ export function NativeChatPaneHeader({
       data-pane-title-surface={light ? 'light' : 'dark'}
       style={HEADER_STYLE}
     >
+      {claudeAccount ? <NativeChatClaudeAccountLabel account={claudeAccount} /> : null}
       <div className="pane-title-actions ml-auto flex shrink-0 items-center gap-0">
         {handOff && focused ? (
           <Tooltip>
@@ -143,7 +148,8 @@ export function nativeChatPaneHeader(
   >,
   worktreeId: string | null,
   colorScheme: React.CSSProperties['colorScheme'],
-  handOff?: NativeChatHandOff
+  handOff?: NativeChatHandOff,
+  claudeAccount?: AgentSessionClaudeAccount
 ): React.JSX.Element | null {
   return view.isVisible && worktreeId && view.groupId && !view.contextMenuActions ? (
     <NativeChatPaneHeader
@@ -158,6 +164,7 @@ export function nativeChatPaneHeader(
           ? { open: handOff.open, disabled: handOff.preparing || handOff.dialog !== null }
           : undefined
       }
+      {...(claudeAccount ? { claudeAccount } : {})}
     />
   ) : null
 }

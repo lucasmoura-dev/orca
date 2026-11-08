@@ -1,3 +1,4 @@
+import type { ClaudeAccountPin } from '../../../shared/claude-account-choice'
 import { AGENT_CHAT_PERMISSION_MODE_OPTION_ID } from '../../../shared/agent-launch/permissions/agent-chat-permission-mode'
 import { resolveStructuredAgentSessionForkIntent } from '../../native-chat/agent-session-wire/acquisition/structured-agent-session-fork'
 import {
@@ -165,7 +166,8 @@ export abstract class OrcaRuntimeWithGetStructuredAgentSessionCreateSupport exte
           workspaceKind: 'folder' | 'git-worktree'
         }
       },
-      permissionMode?: string
+      permissionMode?: string,
+      claudeAccount?: ClaudeAccountPin
     ) => AgentSessionAccountHome | Promise<AgentSessionAccountHome>
   ): Promise<AgentSessionAttachParams> {
     const support = await this.getStructuredAgentSessionCreateSupport(input.worktree, input.agent)
@@ -210,7 +212,11 @@ export abstract class OrcaRuntimeWithGetStructuredAgentSessionCreateSupport exte
       ? (await this.resolveRuntimeFileTarget(input.worktree)).worktree.path
       : ''
     const permissionMode = options?.[AGENT_CHAT_PERMISSION_MODE_OPTION_ID]
-    const selectedAccountHome = await resolveAccountHome({ launchEnv, location }, permissionMode)
+    const selectedAccountHome = await resolveAccountHome(
+      { launchEnv, location },
+      permissionMode,
+      await this.structuredClaudeAccountPinForCreate(input, location, settings)
+    )
     // Adoption pins the transcript's actual account home; fresh-create defaults may open a blank conversation under the old name.
     const adoption =
       resumeFrom && transcriptImport

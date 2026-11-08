@@ -1,4 +1,9 @@
 import {
+  claudeLaunchAccountName,
+  claudeLaunchAccountValue,
+  useClaudeLaunchAccounts
+} from './launch-settings/use-claude-launch-accounts'
+import {
   selectWorktreesByRepo,
   selectFolderWorkspaces
 } from '@/store/workspaces/catalog/workspace-record-fields'
@@ -85,6 +90,9 @@ export function AgentLaunchPickerMenu({
       mode
     )
   }, [entries, draftScope, mode, setupDisabled])
+  const claudeAccounts = useClaudeLaunchAccounts(
+    entries.find((entry) => entry.agent === 'claude')?.worktreeId
+  )
   const [query, setQuery] = useState(initialQuery)
   const [searchFocused, setSearchFocused] = useState(false)
   const [activeSetup, setActiveSetup] = useState<{
@@ -199,28 +207,56 @@ export function AgentLaunchPickerMenu({
             />
           )
         })}
-        {visible.map((entry) => {
+        {visible.flatMap((entry) => {
           const source = draftForEntry?.(entry)
-          return (
+          const row = {
+            draftScope,
+            entry,
+            mode,
+            source,
+            setupDisabled,
+            openSetup,
+            onSetupOpenChange: setActiveSetup,
+            disabled,
+            runLaunch,
+            onSelectAgent,
+            onSetDefault
+          }
+          const selected = value?.agent === entry.agent ? value : undefined
+          const shortcut = mode !== 'select' ? shortcutLabels?.get(entry.agent) : undefined
+          // One row per Claude account, so a launch picks its account without opening setup.
+          const accounts = entry.agent === 'claude' && !setupDisabled ? claudeAccounts : null
+          if (accounts) {
+            return accounts.options.map((option, index) => (
+              <AgentPickerMenuRow
+                key={`${entry.agent}:${option.value}`}
+                {...row}
+                label={`${entry.label} (${claudeLaunchAccountName(option)})`}
+                claudeAccount={option.choice}
+                searchDefault={showSearchDefault && entry === firstEntry && index === 0}
+                selected={
+                  selected &&
+                  (selected.claudeAccount
+                    ? claudeLaunchAccountValue(selected.claudeAccount)
+                    : accounts.inherited) === option.value
+                    ? selected
+                    : undefined
+                }
+                isDefault={index === 0 && defaultAgent === entry.agent}
+                shortcut={index === 0 ? shortcut : undefined}
+              />
+            ))
+          }
+          return [
             <AgentPickerMenuRow
               key={entry.agent}
-              draftScope={draftScope}
-              entry={entry}
-              mode={mode}
+              {...row}
               searchDefault={showSearchDefault && entry === firstEntry}
-              source={source}
-              selected={value?.agent === entry.agent ? value : undefined}
-              setupDisabled={setupDisabled}
-              openSetup={openSetup}
-              onSetupOpenChange={setActiveSetup}
-              disabled={disabled}
-              runLaunch={runLaunch}
-              onSelectAgent={onSelectAgent}
+              selected={selected}
               isDefault={defaultAgent === entry.agent}
-              onSetDefault={onSetDefault}
-              shortcut={mode !== 'select' ? shortcutLabels?.get(entry.agent) : undefined}
+              shortcut={shortcut}
             />
-          )
+          ]
         })}
         {!visible.length && !setups.length ? (
           <DropdownMenuItem disabled>

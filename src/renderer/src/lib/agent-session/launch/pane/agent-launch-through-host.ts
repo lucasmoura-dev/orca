@@ -1,5 +1,10 @@
 /** Allocate the prompt’s owning pane before mount; main plans and starts it at the pane’s real size. */
 
+import type { ClaudeAccountChoice } from '../../../../../../shared/claude-account-choice'
+import {
+  CLAUDE_ACCOUNT_PIN_ENV,
+  claudeAccountPinEnvValue
+} from '../../../../../../shared/claude-account-pin-env'
 import { useAppStore } from '@/store/index'
 
 import { createNonSecureContextUuid as createBrowserUuid } from '../../../../../../shared/non-secure-context-uuid'
@@ -31,6 +36,8 @@ export type HostAgentLaunchArgs = {
   activate?: boolean
   viewMode?: Tab['viewMode']
   suppressStartupUpdatePrompt?: boolean
+  /** Claude only: the account this terminal pins, sent as its identity for the host to route. */
+  claudeAccount?: ClaudeAccountChoice
 }
 
 function stringSessionOptions(options: Record<string, SessionOptionValue> | undefined): {
@@ -48,7 +55,10 @@ function launchParams(args: HostAgentLaunchArgs) {
     ...(args.agentArgs !== undefined ? { agentArgs: args.agentArgs } : {}),
     ...(args.cwd ? { cwd: args.cwd } : {}),
     ...stringSessionOptions(args.sessionOptions),
-    ...(args.launchSource ? { launchSource: args.launchSource } : {})
+    ...(args.launchSource ? { launchSource: args.launchSource } : {}),
+    ...(args.agent === 'claude' && args.claudeAccount
+      ? { accountEnv: { [CLAUDE_ACCOUNT_PIN_ENV]: claudeAccountPinEnvValue(args.claudeAccount) } }
+      : {})
   }
 }
 

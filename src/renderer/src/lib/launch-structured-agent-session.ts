@@ -1,3 +1,4 @@
+import type { ClaudeAccountChoice } from '../../../shared/claude-account-choice'
 import type { StructuredLaunchSurfaceAddress } from './agent-session/launch/structured-agent-session-launch-record'
 import type { TuiAgent } from '../../../shared/agent-launch/catalog/tui-agent'
 import {
@@ -57,6 +58,8 @@ export type StructuredAgentSessionLaunchIntent = {
   /** The saved selection create seeds, read when the intent is built. */
   explicitLaunchOptions?: Readonly<Record<string, string>>
   seedOptions?: Readonly<Record<string, string>>
+  /** The Claude account the user chose; create sends it only to hosts that take it. */
+  claudeAccount?: ClaudeAccountChoice
 }
 
 type LaunchSeed = Readonly<Record<string, string>> | undefined
@@ -183,7 +186,8 @@ export function retryStructuredAgentSessionLaunchIntent(
       intent.seedOptions,
       intent.params.forkFrom
     ),
-    explicitLaunchOptions: intent.explicitLaunchOptions
+    explicitLaunchOptions: intent.explicitLaunchOptions,
+    ...(intent.claudeAccount ? { claudeAccount: intent.claudeAccount } : {})
   }
 }
 
@@ -205,6 +209,7 @@ export function restoreStructuredAgentSessionLaunchIntent(args: {
   options?: Readonly<Record<string, string>>
   sendSelectionSupport?: boolean
   createMessageSupport?: boolean
+  claudeAccount?: ClaudeAccountChoice
 }): StructuredAgentSessionLaunchIntent {
   const state = useAppStore.getState()
   const { target } = structuredAgentSessionOwnerTarget(args.worktreeId, args.executionHostId)
@@ -234,6 +239,7 @@ export function restoreStructuredAgentSessionLaunchIntent(args: {
       : { createMessageSupport: args.createMessageSupport }),
     ...(args.createMessageSupport === undefined ? {} : { createPrepared: true as const }),
     ...(args.explicitLaunchOptions ? { explicitLaunchOptions: args.explicitLaunchOptions } : {}),
+    ...(args.claudeAccount ? { claudeAccount: args.claudeAccount } : {}),
     ...(args.forkFrom
       ? {}
       : args.createMessageSupport !== undefined

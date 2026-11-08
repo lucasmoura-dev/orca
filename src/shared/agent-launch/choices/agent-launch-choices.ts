@@ -1,3 +1,4 @@
+import type { ClaudeAccountChoice } from '../../claude-account-choice'
 import { isTuiAgent } from '../catalog/tui-agent-config'
 import { isAgentSessionOptions } from '../../agent-session/lifecycle/agent-session-record'
 import type { TuiAgent } from '../catalog/tui-agent'
@@ -82,6 +83,8 @@ export type AgentLaunchInputViews = {
   agentArgs?: string | null
   sessionOptions?: Readonly<Record<string, string>>
   chatSessionOptions?: Readonly<Record<string, string>>
+  /** The Claude account a new chat pins. */
+  claudeAccount?: ClaudeAccountChoice
 }
 
 export function agentPickerSessionOptions(choices: AgentDedicatedChoices): Record<string, string> {

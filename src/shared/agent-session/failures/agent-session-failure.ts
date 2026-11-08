@@ -41,6 +41,7 @@ export const AGENT_SESSION_FAILURE_KINDS = [
   'historyInOtherAccount',
   'claudeAccountFolderMissing',
   'claudeAccountSetupFailed',
+  'claudeAccountRemoved',
   'agentCommandNotRunnable',
   'runtimeNotInstalled',
   /** The agent refuses Full access while it runs as root. */

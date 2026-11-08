@@ -1,6 +1,11 @@
 /** Durable account binding: existing single-directory records or OpenCode's data context. */
 
 import type { AgentSessionStoredAgent } from './agent-session-stored-agent'
+import {
+  isClaudeAccountPin,
+  sameClaudeAccountChoice,
+  type ClaudeAccountPin
+} from '../../claude-account-choice'
 
 /** Account root the chat was created or adopted under, where its history was first written. An agent
  *  whose launch follows the selection starts under the account selected now instead. */
@@ -9,6 +14,8 @@ export type LegacyAgentSessionAccountHome = {
   variable: string
   /** Host-resolved absolute path in the execution host's own path syntax. */
   path: string
+  /** Claude only: the account every launch uses; absent means the launch follows the selection. */
+  pin?: ClaudeAccountPin
 }
 
 export type OpenCodeAccountLocator =
@@ -52,7 +59,8 @@ export function agentSessionAccountHomesEqual(
     return (
       isLegacyAgentSessionAccountHome(right) &&
       left.variable === right.variable &&
-      left.path === right.path
+      left.path === right.path &&
+      sameClaudeAccountChoice(left.pin, right.pin)
     )
   }
   if (isLegacyAgentSessionAccountHome(right)) {
@@ -112,7 +120,8 @@ export function isAgentSessionAccountHome(value: unknown): value is AgentSession
       typeof value.variable === 'string' &&
       ENVIRONMENT_VARIABLE_NAME.test(value.variable) &&
       'path' in value &&
-      isBoundedAccountString(value.path, MAX_PATH_LENGTH)
+      isBoundedAccountString(value.path, MAX_PATH_LENGTH) &&
+      (!('pin' in value) || value.pin === undefined || isClaudeAccountPin(value.pin))
     )
   }
   if (
@@ -134,4 +143,11 @@ export function isAgentSessionAccountHome(value: unknown): value is AgentSession
     )
   }
   return locator.kind === 'unmanaged'
+}
+
+/** The Claude account a chat is pinned to; null for chats that follow the selection. */
+export function agentSessionClaudeAccountPin(
+  home: AgentSessionAccountHome | null
+): ClaudeAccountPin | null {
+  return home && isLegacyAgentSessionAccountHome(home) ? (home.pin ?? null) : null
 }
