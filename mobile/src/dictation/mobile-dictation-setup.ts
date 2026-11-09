@@ -208,7 +208,10 @@ export function dictationNeedsSetup(setup: MobileSpeechSetup): boolean {
 }
 
 // Keep copy short and host-neutral: the paired computer may be a headless server.
-export function cloudModelNeedsKey(): string {
+export function cloudModelNeedsKey(model?: MobileSpeechModel): string {
+  if (model?.provider === 'self-hosted') {
+    return translate('dictation.setup.selfHostedNeedsSetup', 'Set up on your computer')
+  }
   return translate('dictation.setup.cloudModelNeedsKey', 'Needs an OpenAI key')
 }
 
@@ -227,7 +230,7 @@ export function dictationModelRowAction(
   if (model.status === 'ready') {
     return model.id === selectedModelId ? 'in-use' : 'use'
   }
-  if (model.provider === 'openai') {
+  if (model.provider !== 'local') {
     return 'needs-api-key'
   }
   return isModelInFlight(model) ? 'downloading' : 'download'

@@ -1,7 +1,11 @@
 import { engineDictationLanguage } from '../../shared/dictation-language'
 import type { SpeechModelManifest } from '../../shared/speech-types'
 import { getCatalogModel } from './model-catalog'
-import { OpenAiTranscriptionSession } from './openai-transcription-client'
+import {
+  OpenAiTranscriptionSession,
+  openAiTranscriptionEndpoint,
+  selfHostedTranscriptionEndpoint
+} from './openai-transcription-client'
 import { readOpenAiSpeechApiKey } from './openai-api-key-store'
 import type { SttEventSink } from './stt-service'
 import {
@@ -55,9 +59,9 @@ export async function startSttDictation(
     throw new Error(`Unknown model: ${modelId}`)
   }
   const config: SttRecognizerConfig | null =
-    manifest.provider === 'openai'
-      ? null
-      : { modelId, hotwordsFilePath, language: engineDictationLanguage(manifest, language) }
+    manifest.provider === 'local'
+      ? { modelId, hotwordsFilePath, language: engineDictationLanguage(manifest, language) }
+      : null
   if (state.sessions.size >= MAX_STT_SESSIONS) {
     throw new Error('dictation_session_limit')
   }
@@ -90,8 +94,9 @@ export async function startSttDictation(
       // A cloud dictation needs no recognizer; free one nobody else uses.
       await teardownIdleSttEngine(state)
       session.cloud = new OpenAiTranscriptionSession(
-        modelId,
-        readOpenAiSpeechApiKey,
+        manifest.provider === 'self-hosted'
+          ? selfHostedTranscriptionEndpoint(state.readSelfHostedTranscription())
+          : openAiTranscriptionEndpoint(modelId, readOpenAiSpeechApiKey),
         engineDictationLanguage(manifest, language)
       )
     }

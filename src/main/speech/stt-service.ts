@@ -4,6 +4,7 @@ import type { SpawnSttWorkerProcess } from './stt-worker-process'
 import { prewarmSttModel } from './stt-session-prewarm'
 import { startSttDictation } from './stt-session-start'
 import { createSttSessionState, sttEngineUsers, type SttSessionState } from './stt-session-state'
+import type { SelfHostedTranscriptionConfig } from './openai-transcription-client'
 import {
   prepareSttModelForDeletion,
   scheduleSttIdleTeardown,
@@ -25,8 +26,12 @@ export type SttEventSink = (event: SttEvent) => void
 export class SttService {
   private readonly state: SttSessionState
 
-  constructor(modelManager: ModelManager, spawnWorker: SpawnSttWorkerProcess) {
-    this.state = createSttSessionState(modelManager, spawnWorker)
+  constructor(
+    modelManager: ModelManager,
+    spawnWorker: SpawnSttWorkerProcess,
+    readSelfHostedTranscription?: () => SelfHostedTranscriptionConfig
+  ) {
+    this.state = createSttSessionState(modelManager, spawnWorker, readSelfHostedTranscription)
   }
 
   startDictation(

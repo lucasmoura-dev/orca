@@ -1,6 +1,7 @@
 import type { ModelManager } from './model-manager'
 import type { SttService } from './stt-service'
 import type { VoiceSettings } from '../../shared/speech-types'
+import type { SelfHostedTranscriptionConfig } from './openai-transcription-client'
 
 /** Hosts inject Chromium/Node download factories; missing services reject per call rather than appearing to transcribe. */
 
@@ -11,8 +12,14 @@ type SpeechSettingsStore = {
 }
 
 export type SpeechServiceFactories = {
-  createModelManager(customModelsDir: string | undefined): ModelManager
-  createSttService(models: ModelManager): SttService
+  createModelManager(
+    customModelsDir: string | undefined,
+    readSelfHostedTranscription: () => SelfHostedTranscriptionConfig
+  ): ModelManager
+  createSttService(
+    models: ModelManager,
+    readSelfHostedTranscription: () => SelfHostedTranscriptionConfig
+  ): SttService
 }
 
 let factories: SpeechServiceFactories | null = null
@@ -32,18 +39,38 @@ function requireFactories(): SpeechServiceFactories {
   return factories
 }
 
+// Read on every use: the user edits the server URL without restarting Orca.
+function selfHostedTranscriptionReader(
+  store: SpeechSettingsStore
+): () => SelfHostedTranscriptionConfig {
+  return () => {
+    const voice = store.getSettings().voice
+    return {
+      selfHostedTranscriptionUrl: voice?.selfHostedTranscriptionUrl ?? '',
+      selfHostedTranscriptionModel: voice?.selfHostedTranscriptionModel ?? '',
+      selfHostedTranscriptionPrompt: voice?.selfHostedTranscriptionPrompt ?? ''
+    }
+  }
+}
+
 export function getSpeechModelManager(store: SpeechSettingsStore): ModelManager {
   if (!modelManager) {
     const settings = store.getSettings()
     const customDir = settings.voice?.modelsDir || undefined
-    modelManager = requireFactories().createModelManager(customDir || undefined)
+    modelManager = requireFactories().createModelManager(
+      customDir || undefined,
+      selfHostedTranscriptionReader(store)
+    )
   }
   return modelManager
 }
 
 export function getSpeechSttService(store: SpeechSettingsStore): SttService {
   if (!sttService) {
-    sttService = requireFactories().createSttService(getSpeechModelManager(store))
+    sttService = requireFactories().createSttService(
+      getSpeechModelManager(store),
+      selfHostedTranscriptionReader(store)
+    )
   }
   return sttService
 }

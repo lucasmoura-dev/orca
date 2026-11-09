@@ -1,4 +1,7 @@
-import type { SpeechModelManifest } from '../../shared/speech-types'
+import {
+  SELF_HOSTED_TRANSCRIPTION_MODEL_ID,
+  type SpeechModelManifest
+} from '../../shared/speech-types'
 import {
   DICTATION_LANGUAGES,
   SENSE_VOICE_DICTATION_LANGUAGES
@@ -149,6 +152,18 @@ export const SPEECH_MODEL_CATALOG: SpeechModelManifest[] = [
     description: 'Cloud transcription with higher accuracy. Requires an OpenAI API key.',
     type: 'openai',
     provider: 'openai',
+    language: 'multilingual',
+    dictationLanguages: DICTATION_LANGUAGES,
+    sampleRate: 16000,
+    streaming: false
+  },
+  {
+    id: SELF_HOSTED_TRANSCRIPTION_MODEL_ID,
+    label: 'Self-hosted Server',
+    description:
+      'Any OpenAI-compatible transcription server on your own GPU, such as Speaches running Whisper Large v3 Turbo. Set its URL and model.',
+    type: 'self-hosted',
+    provider: 'self-hosted',
     language: 'multilingual',
     dictationLanguages: DICTATION_LANGUAGES,
     sampleRate: 16000,

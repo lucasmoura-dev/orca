@@ -7,7 +7,7 @@ import type {
   SpeechModelStatus
 } from '../../shared/speech-types'
 import { SPEECH_MODEL_CATALOG, getCatalogModel, isLocalSpeechModel } from './model-catalog'
-import { hasOpenAiSpeechApiKey } from './openai-api-key-store'
+import { cloudModelReadiness, type CloudModelReadiness } from './cloud-model-readiness'
 import {
   getSpeechModelCacheDirCandidates,
   migrateSpeechModelCacheIfNeeded,
@@ -38,7 +38,7 @@ export class ModelManager extends SpeechModelDownloadTransport {
   constructor(
     customModelsDir: string | undefined,
     openRequest: OpenSpeechDownloadRequest,
-    private readonly hasOpenAiKey: () => boolean = hasOpenAiSpeechApiKey
+    private readonly isCloudModelReady: CloudModelReadiness = cloudModelReadiness()
   ) {
     super(openRequest)
     const requestedModelsDir =
@@ -103,8 +103,9 @@ export class ModelManager extends SpeechModelDownloadTransport {
       return { id: modelId, status: 'error', error: 'Unknown model' }
     }
 
-    if (manifest.provider === 'openai') {
-      return { id: modelId, status: this.hasOpenAiKey() ? 'ready' : 'not-downloaded' }
+    if (manifest.provider !== 'local') {
+      const ready = this.isCloudModelReady(manifest)
+      return { id: modelId, status: ready ? 'ready' : 'not-downloaded' }
     }
 
     const modelDir = this.getModelDir(modelId)

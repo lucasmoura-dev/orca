@@ -1,3 +1,4 @@
+import { cloudModelReadiness } from '../speech/cloud-model-readiness'
 import { ModelManager } from '../speech/model-manager'
 import { openNodeSpeechDownloadRequest } from '../speech/node-speech-download-request'
 import { canReadOpenAiSpeechApiKey } from '../speech/openai-api-key-store'
@@ -7,8 +8,13 @@ import { spawnSttForkedProcess } from '../speech/stt-worker-forked-process'
 
 // Local speech needs the installed app recognizer supplied by orca serve.
 export const orcadSpeechServiceFactories: SpeechServiceFactories = {
-  createModelManager: (customModelsDir) =>
+  createModelManager: (customModelsDir, readSelfHostedTranscription) =>
     // Headless key reads cannot open keychain prompts, so readiness may verify decryption.
-    new ModelManager(customModelsDir, openNodeSpeechDownloadRequest, canReadOpenAiSpeechApiKey),
-  createSttService: (models) => new SttService(models, spawnSttForkedProcess)
+    new ModelManager(
+      customModelsDir,
+      openNodeSpeechDownloadRequest,
+      cloudModelReadiness(readSelfHostedTranscription, canReadOpenAiSpeechApiKey)
+    ),
+  createSttService: (models, readSelfHostedTranscription) =>
+    new SttService(models, spawnSttForkedProcess, readSelfHostedTranscription)
 }

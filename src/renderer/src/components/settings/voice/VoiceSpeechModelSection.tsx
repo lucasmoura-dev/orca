@@ -13,7 +13,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger
 } from '../../ui/dropdown-menu'
-import { Cloud, Download, Trash2, Loader2, ChevronDown, Check } from 'lucide-react'
+import { Cloud, Download, Trash2, Loader2, ChevronDown, Check, Server } from 'lucide-react'
 import { translate } from '@/i18n/i18n'
 import { speechModelDescription } from './speech-model-description'
 import { isOfferedSpeechModel } from '../../../../../shared/speech-model-retirement'
@@ -30,6 +30,7 @@ type VoiceSpeechModelSectionProps = {
   modelStates: SpeechModelState[]
   onUpdateVoiceSettings: (updates: Partial<VoiceSettings>) => void
   onOpenOpenAiDialog: (modelId: string) => void
+  onOpenSelfHostedDialog: () => void
   onRefreshModelStates: () => void
 }
 
@@ -39,6 +40,7 @@ export function VoiceSpeechModelSection({
   modelStates,
   onUpdateVoiceSettings,
   onOpenOpenAiDialog,
+  onOpenSelfHostedDialog,
   onRefreshModelStates
 }: VoiceSpeechModelSectionProps): React.JSX.Element {
   const [pendingDeleteModelIds, setPendingDeleteModelIds] = useState<Set<string>>(() => new Set())
@@ -90,7 +92,9 @@ export function VoiceSpeechModelSection({
             const isDownloading =
               mState?.status === 'downloading' || mState?.status === 'extracting'
             const isActive = voiceSettings.sttModel === manifest.id
-            const isCloud = manifest.provider === 'openai'
+            // Cloud and self-hosted servers have nothing to download here.
+            const isCloud = manifest.provider !== 'local'
+            const isSelfHosted = manifest.provider === 'self-hosted'
             const deletePending = pendingDeleteModelIds.has(manifest.id)
             const sizeMb = manifest.sizeBytes ? Math.round(manifest.sizeBytes / 1_000_000) : null
 
@@ -103,6 +107,8 @@ export function VoiceSpeechModelSection({
                     event.preventDefault()
                   } else if (isReady) {
                     onUpdateVoiceSettings({ sttModel: manifest.id })
+                  } else if (isSelfHosted) {
+                    onOpenSelfHostedDialog()
                   } else if (isCloud) {
                     onOpenOpenAiDialog(manifest.id)
                   } else if (!isDownloading) {
@@ -129,6 +135,8 @@ export function VoiceSpeechModelSection({
                     <Check className="size-3.5" />
                   ) : isDownloading ? (
                     <Loader2 className="size-3.5 animate-spin text-muted-foreground" />
+                  ) : isSelfHosted ? (
+                    <Server className="size-3.5 text-muted-foreground" />
                   ) : isCloud ? (
                     <Cloud className="size-3.5 text-muted-foreground" />
                   ) : null}

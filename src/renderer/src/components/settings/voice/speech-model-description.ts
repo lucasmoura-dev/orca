@@ -61,6 +61,11 @@ const DESCRIPTIONS: Record<string, () => string> = {
     translate(
       'settings.voice.modelDescriptions.gpt4oTranscribe',
       'Cloud transcription with higher accuracy. Requires an OpenAI API key.'
+    ),
+  'self-hosted-transcription': () =>
+    translate(
+      'settings.voice.modelDescriptions.selfHosted',
+      'Any OpenAI-compatible transcription server on your own GPU, such as Speaches running Whisper Large v3 Turbo. Set its URL and model.'
     )
 }
 

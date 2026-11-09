@@ -88,6 +88,9 @@ export function installBrowserLinkMaterializationProbe() {
         terminalConfirmBeforeInsert: true,
         userModels: [],
         openAiApiKeyConfigured: false,
+        selfHostedTranscriptionUrl: '',
+        selfHostedTranscriptionModel: '',
+        selfHostedTranscriptionPrompt: '',
         microphoneDeviceId: null,
         microphoneDeviceLabel: null,
         unloadModelAfterMinutes: 15

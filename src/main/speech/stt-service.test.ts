@@ -89,10 +89,7 @@ const {
     static instances: HoistedMockOpenAiTranscriptionSession[] = []
     feedCalls: { samples: Float32Array; sampleRate: number }[] = []
 
-    constructor(
-      readonly modelId: string,
-      readonly readApiKey: () => string
-    ) {
+    constructor(readonly endpoint: { model: string; readApiKey?: () => string }) {
       HoistedMockOpenAiTranscriptionSession.instances.push(this)
     }
 
@@ -101,7 +98,7 @@ const {
     }
 
     finish(): Promise<string> {
-      return Promise.resolve(`${this.modelId}:${this.readApiKey()}`)
+      return Promise.resolve(`${this.endpoint.model}:${this.endpoint.readApiKey?.()}`)
     }
   }
 
@@ -187,7 +184,12 @@ vi.mock('./openai-api-key-store', () => ({
 }))
 
 vi.mock('./openai-transcription-client', () => ({
-  OpenAiTranscriptionSession: MockOpenAiTranscriptionSession
+  OpenAiTranscriptionSession: MockOpenAiTranscriptionSession,
+  openAiTranscriptionEndpoint: (model: string, readApiKey: () => string) => ({
+    model,
+    readApiKey
+  }),
+  selfHostedTranscriptionEndpoint: vi.fn()
 }))
 
 import { START_DICTATION_TIMEOUT_MS, SttService, type SttEventSink } from './stt-service'

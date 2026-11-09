@@ -61,7 +61,12 @@ function formatSize(bytes: number | null | undefined, t: Translate): string {
 }
 
 function modelMetadata(model: MobileSpeechModel, t: Translate): string {
-  const details = model.provider === 'openai' ? 'OpenAI API' : formatSize(model.sizeBytes, t)
+  const details =
+    model.provider === 'openai'
+      ? 'OpenAI API'
+      : model.provider === 'self-hosted'
+        ? 'Self-hosted'
+        : formatSize(model.sizeBytes, t)
   if (isModelInFlight(model) && model.progress != null) {
     return t('components.dictationSetupSheet.modelProgress', '{{details}} · {{progress}}%', {
       details,
@@ -219,7 +224,7 @@ export function MobileDictationSetupSheet({ visible, client, onClose, onReady }:
                     <Text style={styles.modelMeta}>{modelMetadata(model, t)}</Text>
                   </View>
                   {action === 'needs-api-key' ? (
-                    <Text style={styles.modelStateText}>{cloudModelNeedsKey()}</Text>
+                    <Text style={styles.modelStateText}>{cloudModelNeedsKey(model)}</Text>
                   ) : action === 'in-use' ? (
                     <View style={styles.selectedTag}>
                       <Check size={14} color={colors.statusGreen} strokeWidth={2.4} />

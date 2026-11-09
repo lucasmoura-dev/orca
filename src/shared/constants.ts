@@ -118,6 +118,9 @@ export function getDefaultVoiceSettings(): VoiceSettings {
     terminalConfirmBeforeInsert: false,
     userModels: [],
     openAiApiKeyConfigured: false,
+    selfHostedTranscriptionUrl: '',
+    selfHostedTranscriptionModel: '',
+    selfHostedTranscriptionPrompt: '',
     microphoneDeviceId: null,
     microphoneDeviceLabel: null,
     unloadModelAfterMinutes: DEFAULT_UNLOAD_MODEL_AFTER_MINUTES

@@ -28,6 +28,35 @@ export const getOpenaiTranscriptionSearchEntry = createLocalizedCatalog(
   })
 )
 
+export const getSelfHostedTranscriptionSearchEntry = createLocalizedCatalog(
+  (): SettingsSearchEntry => ({
+    title: translate(
+      'components.settings.voice.pane.search.selfHostedTitle',
+      'Self-hosted Transcription'
+    ),
+    description: translate(
+      'components.settings.voice.pane.search.selfHostedDescription',
+      'Point dictation at an OpenAI-compatible speech server on your own GPU, such as Speaches with Whisper.'
+    ),
+    keywords: [
+      ...translateSearchKeyword('auto.components.settings.voice.pane.search.7640ed9848', 'voice'),
+      ...translateSearchKeyword('auto.components.settings.voice.pane.search.3d8b853963', 'speech'),
+      ...translateSearchKeyword('auto.components.settings.voice.pane.search.10d45a9fce', 'stt'),
+      ...translateSearchKeyword(
+        'components.settings.voice.pane.search.selfHostedKeyword',
+        'self-hosted'
+      ),
+      ...translateSearchKeyword('components.settings.voice.pane.search.whisperKeyword', 'whisper'),
+      ...translateSearchKeyword('components.settings.voice.pane.search.serverKeyword', 'server'),
+      ...translateSearchKeyword('components.settings.voice.pane.search.gpuKeyword', 'gpu'),
+      ...translateSearchKeyword(
+        'auto.components.settings.voice.pane.search.322d457a0d',
+        'transcription'
+      )
+    ]
+  })
+)
+
 export const getVoicePaneSearchEntries = createLocalizedCatalog(() => [
   {
     title: translate(
@@ -143,6 +172,7 @@ export const getVoicePaneSearchEntries = createLocalizedCatalog(() => [
     ]
   },
   getOpenaiTranscriptionSearchEntry(),
+  getSelfHostedTranscriptionSearchEntry(),
   {
     title: translate('auto.components.settings.voice.pane.search.7e62cd7c41', 'Speech Model'),
     description: translate(

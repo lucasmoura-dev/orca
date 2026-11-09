@@ -1135,7 +1135,8 @@
         "whisperTiny": "90+ languages. Lower accuracy than Parakeet but broadest language coverage.",
         "senseVoice": "Chinese, English, Japanese, Korean, and Cantonese with automatic language detection.",
         "gpt4oMiniTranscribe": "Cloud transcription with strong accuracy and low cost. Requires an OpenAI API key.",
-        "gpt4oTranscribe": "Cloud transcription with higher accuracy. Requires an OpenAI API key."
+        "gpt4oTranscribe": "Cloud transcription with higher accuracy. Requires an OpenAI API key.",
+        "selfHosted": "Any OpenAI-compatible transcription server on your own GPU, such as Speaches running Whisper Large v3 Turbo. Set its URL and model."
       }
     },
     "diagnostics": {
@@ -21241,6 +21242,36 @@
           "cloud": "Cloud models run on the provider’s servers, so nothing stays loaded here.",
           "never": "Never",
           "immediately": "Immediately"
+        },
+        "selfHosted": {
+          "dialogTitle": "Self-hosted Transcription",
+          "dialogDescription": "Audio is posted to this server’s OpenAI-compatible /v1/audio/transcriptions endpoint. Works with Speaches, whisper.cpp server, vLLM and similar.",
+          "urlLabel": "Server URL",
+          "modelLabel": "Model",
+          "modelHint": "The model id exactly as the server exposes it.",
+          "promptLabel": "Vocabulary hint (optional)",
+          "promptHint": "Sent as the Whisper prompt with every dictation, so names and technical terms come out spelled this way.",
+          "disconnect": "Disconnect",
+          "save": "Save",
+          "rowTitle": "Self-hosted Transcription",
+          "connected": "Connected",
+          "rowDescription": "Set the URL and model of an OpenAI-compatible speech server running on your own hardware.",
+          "edit": "Edit",
+          "disconnectAria": "Disconnect self-hosted transcription server",
+          "configure": "Configure",
+          "urlPlaceholder": "http://localhost:8000",
+          "modelPlaceholder": "deepdml/faster-whisper-large-v3-turbo-ct2",
+          "promptPlaceholder": "React, TypeScript, pnpm, commit, merge, deploy, Supabase"
+        },
+        "pane": {
+          "search": {
+            "selfHostedTitle": "Self-hosted Transcription",
+            "selfHostedDescription": "Point dictation at an OpenAI-compatible speech server on your own GPU, such as Speaches with Whisper.",
+            "selfHostedKeyword": "self-hosted",
+            "whisperKeyword": "whisper",
+            "serverKeyword": "server",
+            "gpuKeyword": "gpu"
+          }
         }
       }
     },

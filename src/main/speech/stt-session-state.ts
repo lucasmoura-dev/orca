@@ -1,6 +1,10 @@
 import { voiceModelUnloadDelayMs } from '../../shared/voice-model-unload'
 import type { ModelManager } from './model-manager'
-import type { OpenAiTranscriptionSession } from './openai-transcription-client'
+import {
+  EMPTY_SELF_HOSTED_TRANSCRIPTION,
+  type OpenAiTranscriptionSession,
+  type SelfHostedTranscriptionConfig
+} from './openai-transcription-client'
 import type { SttEventSink } from './stt-service'
 import type { SpawnSttWorkerProcess, SttWorkerProcess } from './stt-worker-process'
 
@@ -38,6 +42,7 @@ export type SttSession = {
 export type SttSessionState = {
   spawnWorker: SpawnSttWorkerProcess
   modelManager: ModelManager
+  readSelfHostedTranscription: () => SelfHostedTranscriptionConfig
   engine: SttEngine | null
   sessions: Map<string, SttSession>
   nextStreamId: number
@@ -52,11 +57,14 @@ export type SttSessionState = {
 
 export function createSttSessionState(
   modelManager: ModelManager,
-  spawnWorker: SpawnSttWorkerProcess
+  spawnWorker: SpawnSttWorkerProcess,
+  readSelfHostedTranscription: () => SelfHostedTranscriptionConfig = () =>
+    EMPTY_SELF_HOSTED_TRANSCRIPTION
 ): SttSessionState {
   return {
     spawnWorker,
     modelManager,
+    readSelfHostedTranscription,
     engine: null,
     sessions: new Map(),
     nextStreamId: 0,

@@ -1,7 +1,9 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   OpenAiTranscriptionSession,
-  sanitizeOpenAiTranscriptionErrorMessage
+  openAiTranscriptionEndpoint,
+  sanitizeOpenAiTranscriptionErrorMessage,
+  selfHostedTranscriptionEndpoint
 } from './openai-transcription-client'
 
 describe('sanitizeOpenAiTranscriptionErrorMessage', () => {
@@ -22,6 +24,48 @@ describe('sanitizeOpenAiTranscriptionErrorMessage', () => {
   })
 })
 
+describe('selfHostedTranscriptionEndpoint', () => {
+  it('resolves the transcriptions path from a root, a /v1 base or the full path', () => {
+    const config = {
+      selfHostedTranscriptionModel: 'deepdml/faster-whisper-large-v3-turbo-ct2',
+      selfHostedTranscriptionPrompt: ' React, TypeScript, pnpm '
+    }
+    const urls = [
+      'http://localhost:8000',
+      'http://localhost:8000/',
+      'http://localhost:8000/v1',
+      'http://localhost:8000/v1/audio/transcriptions'
+    ].map(
+      (selfHostedTranscriptionUrl) =>
+        selfHostedTranscriptionEndpoint({ ...config, selfHostedTranscriptionUrl }).url
+    )
+    expect(urls).toEqual(Array(4).fill('http://localhost:8000/v1/audio/transcriptions'))
+    const endpoint = selfHostedTranscriptionEndpoint({
+      ...config,
+      selfHostedTranscriptionUrl: 'http://localhost:8000'
+    })
+    expect(endpoint.prompt).toBe('React, TypeScript, pnpm')
+    expect(endpoint.readApiKey).toBeUndefined()
+  })
+
+  it('rejects a missing scheme or model', () => {
+    expect(() =>
+      selfHostedTranscriptionEndpoint({
+        selfHostedTranscriptionUrl: 'localhost:8000',
+        selfHostedTranscriptionModel: 'x',
+        selfHostedTranscriptionPrompt: ''
+      })
+    ).toThrow(/http\(s\)/)
+    expect(() =>
+      selfHostedTranscriptionEndpoint({
+        selfHostedTranscriptionUrl: 'http://localhost:8000',
+        selfHostedTranscriptionModel: ' ',
+        selfHostedTranscriptionPrompt: ''
+      })
+    ).toThrow(/model id/)
+  })
+})
+
 describe('OpenAiTranscriptionSession', () => {
   afterEach(() => vi.unstubAllGlobals())
 
@@ -33,8 +77,7 @@ describe('OpenAiTranscriptionSession', () => {
     })
     for (const language of ['ko', undefined]) {
       const session = new OpenAiTranscriptionSession(
-        'openai-gpt-4o-mini-transcribe',
-        () => 'test-key',
+        openAiTranscriptionEndpoint('openai-gpt-4o-mini-transcribe', () => 'test-key'),
         language
       )
       session.feedAudio(new Float32Array([0.1]), 16000)
@@ -65,8 +108,7 @@ describe('OpenAiTranscriptionSession', () => {
       return new Response(JSON.stringify({ text: ' complete dictation ' }))
     })
     const session = new OpenAiTranscriptionSession(
-      'openai-gpt-4o-mini-transcribe',
-      () => 'test-key'
+      openAiTranscriptionEndpoint('openai-gpt-4o-mini-transcribe', () => 'test-key')
     )
     const input = new Float32Array([
       -2,
@@ -105,8 +147,7 @@ describe('OpenAiTranscriptionSession', () => {
       return new Response(JSON.stringify({ text: 'first ten minutes' }))
     })
     const session = new OpenAiTranscriptionSession(
-      'openai-gpt-4o-mini-transcribe',
-      () => 'test-key'
+      openAiTranscriptionEndpoint('openai-gpt-4o-mini-transcribe', () => 'test-key')
     )
     const sevenSeconds = new Float32Array(7 * 16000).fill(0.1)
     const capReports = Array.from({ length: 90 }, () => session.feedAudio(sevenSeconds, 16000))

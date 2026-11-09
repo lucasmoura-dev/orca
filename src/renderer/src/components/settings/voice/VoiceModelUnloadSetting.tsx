@@ -38,7 +38,7 @@ export function VoiceModelUnloadSetting({
   onUpdateVoiceSettings
 }: VoiceModelUnloadSettingProps): React.JSX.Element {
   const labelId = useId()
-  const isCloudModel = selectedModel?.provider === 'openai'
+  const isCloudModel = selectedModel !== undefined && selectedModel.provider !== 'local'
   const current = unloadModelAfterMinutes(voiceSettings)
 
   return (

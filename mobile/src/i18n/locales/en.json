@@ -516,7 +516,8 @@
       "downloadFailed": "Failed to start download",
       "deleteFailed": "Failed to delete model",
       "updateFailed": "Failed to update dictation settings",
-      "cloudModelNeedsKey": "Needs an OpenAI key"
+      "cloudModelNeedsKey": "Needs an OpenAI key",
+      "selfHostedNeedsSetup": "Set up on your computer"
     }
   },
   "home": {

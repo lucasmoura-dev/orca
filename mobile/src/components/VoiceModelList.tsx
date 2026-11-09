@@ -38,6 +38,9 @@ function modelMeta(model: MobileSpeechModel, t: Translate): string {
   if (model.provider === 'openai') {
     return 'OpenAI API'
   }
+  if (model.provider === 'self-hosted') {
+    return 'Self-hosted'
+  }
   const inFlight = isModelInFlight(model)
   if (inFlight && model.progress != null) {
     return t('components.voiceModelList.modelProgress', '{{size}} · {{progress}}%', {
@@ -88,7 +91,7 @@ export function VoiceModelList({
               }
               accessory={
                 action === 'needs-api-key' ? (
-                  <Text style={styles.modelStateText}>{cloudModelNeedsKey()}</Text>
+                  <Text style={styles.modelStateText}>{cloudModelNeedsKey(model)}</Text>
                 ) : action === 'in-use' || action === 'use' ? (
                   <View style={styles.readyActions}>
                     {action === 'in-use' ? (
@@ -127,7 +130,7 @@ export function VoiceModelList({
                       </Pressable>
                     )}
                     {/* A cloud model has nothing on this computer to delete. */}
-                    {model.provider === 'openai' ? null : (
+                    {model.provider !== 'local' ? null : (
                       <Pressable
                         style={({ pressed }) => [
                           styles.iconButton,

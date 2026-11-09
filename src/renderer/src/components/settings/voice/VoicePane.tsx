@@ -3,25 +3,38 @@ import type { SecretAtRestProtection } from '../../../../../shared/secret-at-res
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { GlobalSettings } from '../../../../../shared/global-settings-types'
 import { getDefaultVoiceSettings } from '../../../../../shared/constants'
-import type { SpeechModelManifest, VoiceSettings } from '../../../../../shared/speech-types'
+import {
+  SELF_HOSTED_TRANSCRIPTION_MODEL_ID,
+  type SpeechModelManifest,
+  type VoiceSettings
+} from '../../../../../shared/speech-types'
 import { Separator } from '../../ui/separator'
 import { toast } from 'sonner'
 import { useAppStore } from '@/store/index'
 import { OpenAiTranscriptionKeyDialog } from './OpenAiTranscriptionKeyDialog'
 import { OpenAiTranscriptionSettingsRow } from './OpenAiTranscriptionSettingsRow'
+import {
+  isSelfHostedTranscriptionConfigured,
+  SelfHostedTranscriptionDialog,
+  type SelfHostedTranscriptionDraft
+} from './SelfHostedTranscriptionDialog'
+import { SelfHostedTranscriptionSettingsRow } from './SelfHostedTranscriptionSettingsRow'
 import { handleVoiceDictationToggle } from './voice-dictation-toggle'
 import { VoiceDictationLanguageSetting } from './VoiceDictationLanguageSetting'
 import { VoiceDictationSettingsSection } from './VoiceDictationSettingsSection'
 import { VoiceModelUnloadSetting } from './VoiceModelUnloadSetting'
 import { VoiceSpeechModelSection } from './VoiceSpeechModelSection'
 import { matchesSettingsSearch } from '../search/settings-search'
-import { getOpenaiTranscriptionSearchEntry } from './voice-pane-search'
+import {
+  getOpenaiTranscriptionSearchEntry,
+  getSelfHostedTranscriptionSearchEntry
+} from './voice-pane-search'
 import { translate } from '@/i18n/i18n'
 import { readIpcErrorMessage } from '@/lib/ipc-error'
 
 type VoicePaneProps = {
   settings: GlobalSettings
-  updateSettings: (updates: Partial<GlobalSettings>) => void
+  updateSettings: (updates: Partial<GlobalSettings>) => void | Promise<void>
 }
 
 export function VoicePane({ settings, updateSettings }: VoicePaneProps): React.JSX.Element {
@@ -41,6 +54,7 @@ export function VoicePane({ settings, updateSettings }: VoicePaneProps): React.J
     null
   )
   const [pendingCloudModelId, setPendingCloudModelId] = useState<string | null>(null)
+  const [selfHostedDialogOpen, setSelfHostedDialogOpen] = useState(false)
   const mountedRef = useRef(true)
   // Merge async whole-object writes into committed current settings; render snapshots could undo toggles changed during IPC and disable the microphone picker.
   const voiceSettingsRef = useRef(voiceSettings)
@@ -53,8 +67,8 @@ export function VoicePane({ settings, updateSettings }: VoicePaneProps): React.J
   }, [])
 
   const updateVoiceSettings = useCallback(
-    (updates: Partial<VoiceSettings>): void => {
-      updateSettings({
+    (updates: Partial<VoiceSettings>): void | Promise<void> => {
+      return updateSettings({
         voice: {
           ...voiceSettingsRef.current,
           ...updates
@@ -147,6 +161,33 @@ export function VoicePane({ settings, updateSettings }: VoicePaneProps): React.J
     (settingsSearchQuery.trim() !== '' &&
       matchesSettingsSearch(settingsSearchQuery, getOpenaiTranscriptionSearchEntry()))
 
+  const selfHostedConfigured = isSelfHostedTranscriptionConfigured(voiceSettings)
+  const showSelfHostedSettingsRow =
+    selfHostedConfigured ||
+    selectedModel?.provider === 'self-hosted' ||
+    (settingsSearchQuery.trim() !== '' &&
+      matchesSettingsSearch(settingsSearchQuery, getSelfHostedTranscriptionSearchEntry()))
+
+  // Main reads readiness from the saved settings, so wait for the write before asking it.
+  const saveSelfHostedTranscription = async (
+    draft: SelfHostedTranscriptionDraft
+  ): Promise<void> => {
+    await updateVoiceSettings({ ...draft, sttModel: SELF_HOSTED_TRANSCRIPTION_MODEL_ID })
+    await refreshModelStates()
+    setSelfHostedDialogOpen(false)
+  }
+
+  const clearSelfHostedTranscription = async (): Promise<void> => {
+    await updateVoiceSettings({
+      selfHostedTranscriptionUrl: '',
+      selfHostedTranscriptionModel: '',
+      selfHostedTranscriptionPrompt: '',
+      sttModel: selectedModel?.provider === 'self-hosted' ? '' : voiceSettings.sttModel
+    })
+    await refreshModelStates()
+    setSelfHostedDialogOpen(false)
+  }
+
   const openOpenAiDialog = (modelId: string | null = null): void => {
     setPendingCloudModelId(modelId)
     setOpenAiApiKeyDraft('')
@@ -229,6 +270,7 @@ export function VoicePane({ settings, updateSettings }: VoicePaneProps): React.J
         modelStates={modelStates}
         onUpdateVoiceSettings={updateVoiceSettings}
         onOpenOpenAiDialog={openOpenAiDialog}
+        onOpenSelfHostedDialog={() => setSelfHostedDialogOpen(true)}
         onRefreshModelStates={refreshModelStates}
       />
 
@@ -266,6 +308,27 @@ export function VoicePane({ settings, updateSettings }: VoicePaneProps): React.J
           />
         </>
       )}
+
+      {showSelfHostedSettingsRow && (
+        <>
+          <Separator />
+          <SelfHostedTranscriptionSettingsRow
+            configured={selfHostedConfigured}
+            url={voiceSettings.selfHostedTranscriptionUrl}
+            model={voiceSettings.selfHostedTranscriptionModel}
+            onConfigure={() => setSelfHostedDialogOpen(true)}
+            onClear={() => void clearSelfHostedTranscription()}
+          />
+        </>
+      )}
+
+      <SelfHostedTranscriptionDialog
+        open={selfHostedDialogOpen}
+        current={voiceSettings}
+        onOpenChange={setSelfHostedDialogOpen}
+        onSave={(draft) => void saveSelfHostedTranscription(draft)}
+        onClear={() => void clearSelfHostedTranscription()}
+      />
 
       <OpenAiTranscriptionKeyDialog
         open={openAiDialogOpen}

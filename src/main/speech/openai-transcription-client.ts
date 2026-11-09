@@ -6,6 +6,67 @@ export const OPENAI_TRANSCRIPTION_MODEL_BY_ID: Record<string, string> = {
 }
 
 export const OPENAI_TRANSCRIPTION_URL = 'https://api.openai.com/v1/audio/transcriptions'
+
+/** One `/audio/transcriptions` server: OpenAI itself or an OpenAI-compatible server the user hosts. */
+export type TranscriptionEndpoint = {
+  url: string
+  model: string
+  /** Shown in errors so the user knows which server failed. */
+  providerLabel: string
+  readApiKey?: () => string
+  prompt?: string
+}
+
+export function openAiTranscriptionEndpoint(
+  modelId: string,
+  readApiKey: () => string
+): TranscriptionEndpoint {
+  const model = OPENAI_TRANSCRIPTION_MODEL_BY_ID[modelId]
+  if (!model) {
+    throw new Error(`Unknown OpenAI transcription model: ${modelId}`)
+  }
+  return { url: OPENAI_TRANSCRIPTION_URL, model, providerLabel: 'OpenAI', readApiKey }
+}
+
+export type SelfHostedTranscriptionConfig = {
+  selfHostedTranscriptionUrl: string
+  selfHostedTranscriptionModel: string
+  selfHostedTranscriptionPrompt: string
+}
+
+export const EMPTY_SELF_HOSTED_TRANSCRIPTION: SelfHostedTranscriptionConfig = {
+  selfHostedTranscriptionUrl: '',
+  selfHostedTranscriptionModel: '',
+  selfHostedTranscriptionPrompt: ''
+}
+
+export function hasSelfHostedTranscriptionEndpoint(config: SelfHostedTranscriptionConfig): boolean {
+  try {
+    selfHostedTranscriptionEndpoint(config)
+    return true
+  } catch {
+    return false
+  }
+}
+
+/** Accepts the server root, its `/v1` base or the full transcriptions path. */
+export function selfHostedTranscriptionEndpoint(
+  config: SelfHostedTranscriptionConfig
+): TranscriptionEndpoint {
+  const base = config.selfHostedTranscriptionUrl.trim().replace(/\/+$/, '')
+  if (!/^https?:\/\//i.test(base)) {
+    throw new Error('Self-hosted transcription needs an http(s) server URL in Settings > Voice.')
+  }
+  const url = base.endsWith('/audio/transcriptions')
+    ? base
+    : `${base.endsWith('/v1') ? base : `${base}/v1`}/audio/transcriptions`
+  const model = config.selfHostedTranscriptionModel.trim()
+  if (!model) {
+    throw new Error('Self-hosted transcription needs a model id in Settings > Voice.')
+  }
+  const prompt = config.selfHostedTranscriptionPrompt.trim()
+  return { url, model, providerLabel: 'Self-hosted', prompt: prompt || undefined }
+}
 const CLOUD_TRANSCRIPTION_SAMPLE_RATE = 16000
 const MAX_CLOUD_AUDIO_SAMPLES = 10 * 60 * CLOUD_TRANSCRIPTION_SAMPLE_RATE
 // Room to answer plus the upload time of the WAV at 1 Mbit/s (125 bytes per ms).
@@ -78,9 +139,7 @@ function parseOpenAiTranscriptionResponse(data: OpenAiTranscriptionResponse): st
   if (typeof data.text === 'string') {
     return data.text.trim()
   }
-  throw new Error(
-    readOpenAiErrorMessage(data) ?? 'OpenAI transcription response did not include text'
-  )
+  throw new Error(readOpenAiErrorMessage(data) ?? 'Transcription response did not include text')
 }
 
 export class OpenAiTranscriptionSession {
@@ -89,8 +148,7 @@ export class OpenAiTranscriptionSession {
   private readonly abortController = new AbortController()
 
   constructor(
-    private readonly modelId: string,
-    private readonly readApiKey: () => string,
+    private readonly endpoint: TranscriptionEndpoint,
     private readonly language?: string
   ) {}
 
@@ -118,19 +176,17 @@ export class OpenAiTranscriptionSession {
       return ''
     }
 
-    const apiModel = OPENAI_TRANSCRIPTION_MODEL_BY_ID[this.modelId]
-    if (!apiModel) {
-      throw new Error(`Unknown OpenAI transcription model: ${this.modelId}`)
-    }
-
     const chunks = this.chunks
     this.chunks = []
     const wav = encodePcm16Wav(chunks, CLOUD_TRANSCRIPTION_SAMPLE_RATE)
     const form = new FormData()
-    form.append('model', apiModel)
+    form.append('model', this.endpoint.model)
     form.append('response_format', 'json')
     if (this.language) {
       form.append('language', this.language)
+    }
+    if (this.endpoint.prompt) {
+      form.append('prompt', this.endpoint.prompt)
     }
     // A named WAV blob satisfies multipart uploads without temporary files.
     form.append('file', new Blob([wav], { type: 'audio/wav' }), 'dictation.wav')
@@ -142,26 +198,27 @@ export class OpenAiTranscriptionSession {
       return await this.upload(form, AbortSignal.any([this.abortController.signal, timeout]))
     } catch (error) {
       if (timeout.aborted && !this.abortController.signal.aborted) {
-        throw new Error('OpenAI transcription timed out. Check your connection and try again.')
+        throw new Error(
+          `${this.endpoint.providerLabel} transcription timed out. Check your connection and try again.`
+        )
       }
       throw error
     }
   }
 
   private async upload(form: FormData, signal: AbortSignal): Promise<string> {
-    const response = await fetch(OPENAI_TRANSCRIPTION_URL, {
+    const apiKey = this.endpoint.readApiKey?.()
+    const response = await fetch(this.endpoint.url, {
       method: 'POST',
       signal,
-      headers: {
-        Authorization: `Bearer ${this.readApiKey()}`
-      },
+      headers: apiKey ? { Authorization: `Bearer ${apiKey}` } : {},
       body: form
     })
 
     const data = (await response.json().catch(() => ({}))) as OpenAiTranscriptionResponse
     if (!response.ok) {
       throw new Error(
-        `OpenAI transcription failed: ${readOpenAiErrorMessage(data) ?? response.statusText}`
+        `${this.endpoint.providerLabel} transcription failed: ${readOpenAiErrorMessage(data) ?? response.statusText}`
       )
     }
 

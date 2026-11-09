@@ -1,4 +1,5 @@
 import { net } from 'electron'
+import { cloudModelReadiness } from '../speech/cloud-model-readiness'
 import { ModelManager } from '../speech/model-manager'
 import { SttService } from '../speech/stt-service'
 import { spawnSttUtilityProcess } from '../speech/stt-worker-utility-process'
@@ -39,7 +40,12 @@ export const openElectronSpeechDownloadRequest: OpenSpeechDownloadRequest = (url
 
 /** Importing these factories loads Electron net. */
 export const electronSpeechServiceFactories: SpeechServiceFactories = {
-  createModelManager: (customModelsDir) =>
-    new ModelManager(customModelsDir, openElectronSpeechDownloadRequest),
-  createSttService: (models) => new SttService(models, spawnSttUtilityProcess)
+  createModelManager: (customModelsDir, readSelfHostedTranscription) =>
+    new ModelManager(
+      customModelsDir,
+      openElectronSpeechDownloadRequest,
+      cloudModelReadiness(readSelfHostedTranscription)
+    ),
+  createSttService: (models, readSelfHostedTranscription) =>
+    new SttService(models, spawnSttUtilityProcess, readSelfHostedTranscription)
 }

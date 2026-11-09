@@ -5,7 +5,10 @@ export type SpeechModelType =
   | 'senseVoice'
   | 'nemo-ctc'
   | 'openai'
-export type SpeechModelProvider = 'local' | 'openai'
+  | 'self-hosted'
+export type SpeechModelProvider = 'local' | 'openai' | 'self-hosted'
+
+export const SELF_HOSTED_TRANSCRIPTION_MODEL_ID = 'self-hosted-transcription'
 
 export type ModelingUnit = 'bpe' | 'cjkchar' | 'cjkchar+bpe'
 
@@ -85,6 +88,12 @@ export type VoiceSettings = {
   terminalConfirmBeforeInsert: boolean
   userModels: UserModelConfig[]
   openAiApiKeyConfigured: boolean
+  /** Base URL of an OpenAI-compatible transcription server on your own hardware, e.g. http://localhost:8000/v1 */
+  selfHostedTranscriptionUrl: string
+  /** Model id the server loads, e.g. deepdml/faster-whisper-large-v3-turbo-ct2 */
+  selfHostedTranscriptionModel: string
+  /** Free text sent as the Whisper prompt so the server favors these spellings and terms. */
+  selfHostedTranscriptionPrompt: string
   /** null = system default input device */
   microphoneDeviceId: string | null
   /** Cached label for display when the preferred device is unplugged */

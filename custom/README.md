@@ -1,6 +1,6 @@
 # Customizações do fork
 
-Este fork do Orca (stablyai/orca) acrescenta duas coisas ao oficial: cada chat ou terminal do Claude pode ser fixado numa conta do Claude específica (conta gerenciada ou System default), de modo que trocar a conta selecionada na barra de status não move esse chat; e cada repositório pode definir a conta padrão do Claude com que os novos chats daquele projeto começam. Tudo está no commit `df223fe9074` sobre a base `133bc99e5a3`. Diff de referência: `git diff 133bc99e5a3 df223fe9074`.
+Este fork do Orca (stablyai/orca) acrescenta ao oficial, além da ditada por servidor próprio descrita mais abaixo, duas coisas: cada chat ou terminal do Claude pode ser fixado numa conta do Claude específica (conta gerenciada ou System default), de modo que trocar a conta selecionada na barra de status não move esse chat; e cada repositório pode definir a conta padrão do Claude com que os novos chats daquele projeto começam. Tudo está no commit `df223fe9074` sobre a base `133bc99e5a3`. Diff de referência: `git diff 133bc99e5a3 df223fe9074`.
 
 Vocabulário usado abaixo:
 
@@ -175,11 +175,42 @@ Vocabulário usado abaixo:
   - O relançamento só acontece depois que o processo atual terminou (loop `kill -0` no shell), para não disputar o lock de instância única.
 - Como validar: `src/main/updater/custom/custom-updater.test.ts`; manual: com o arquivo de config presente, "Download update" deve mostrar a barra de progresso do script e "Restart" deve reabrir o app na versão nova.
 
+## Feature: ditada por servidor de transcrição próprio (self-hosted)
+
+- Intenção: no oficial a ditada só roda em modelos locais (sherpa-onnx, CPU) ou na API da OpenAI. O fork acrescenta um modelo "Self-hosted Server" que manda o áudio para qualquer servidor compatível com `/v1/audio/transcriptions` da OpenAI rodando na GPU do usuário (Speaches com Whisper Large v3 Turbo, whisper.cpp server, vLLM), com um texto de vocabulário enviado como `prompt` do Whisper para acertar termos técnicos.
+- Comportamento esperado:
+  - O catálogo tem a entrada `self-hosted-transcription` (`provider: 'self-hosted'`, `type: 'self-hosted'`), sempre listada; ela fica "ready" quando `voice.selfHostedTranscriptionUrl` e `voice.selfHostedTranscriptionModel` estão preenchidos, e "not-downloaded" caso contrário.
+  - Selecionar a entrada sem configuração abre o diálogo com URL, modelo e prompt; salvar grava as três settings e seleciona o modelo. Uma linha "Self-hosted Transcription" aparece na aba Voice quando configurado ou selecionado, com Edit e desconectar.
+  - A URL aceita a raiz do servidor, a base `/v1` ou o caminho completo; sem esquema http(s) ou sem modelo a sessão falha com mensagem apontando Settings > Voice. Sem chave de API: a requisição não manda `Authorization`.
+  - A sessão remota é a mesma classe usada pela OpenAI (`OpenAiTranscriptionSession`), agora parametrizada por `TranscriptionEndpoint`; `language` segue a setting de idioma e `prompt` vai quando preenchido.
+  - No mobile o modelo aparece com o rótulo "Self-hosted" e, sem configuração, "Set up on your computer".
+- Arquivos novos (só do fork):
+  - `src/main/speech/cloud-model-readiness.ts`: `cloudModelReadiness(readSelfHostedTranscription, hasOpenAiKey)` devolve o predicado de prontidão dos modelos que rodam em servidor (OpenAI ou próprio).
+  - `src/renderer/src/components/settings/voice/SelfHostedTranscriptionDialog.tsx` e `SelfHostedTranscriptionSettingsRow.tsx`: diálogo e linha de configuração; `isSelfHostedTranscriptionConfigured`.
+- Pontos de encaixe no upstream:
+  - `src/shared/speech-types.ts`: `'self-hosted'` em `SpeechModelType` e `SpeechModelProvider`; constante `SELF_HOSTED_TRANSCRIPTION_MODEL_ID`; `VoiceSettings` ganha `selfHostedTranscriptionUrl`, `selfHostedTranscriptionModel`, `selfHostedTranscriptionPrompt` (defaults `''` em `src/shared/constants.ts`).
+  - `src/shared/runtime-worktree-contracts.ts`: `RuntimeSpeechModelSummary.provider` inclui `'self-hosted'`; `mobile/src/dictation/dictation-reply-schema.ts` lista o arm.
+  - `src/main/speech/model-catalog.ts`: entrada `self-hosted-transcription` no fim de `SPEECH_MODEL_CATALOG`.
+  - `src/main/speech/openai-transcription-client.ts`: `TranscriptionEndpoint`, `openAiTranscriptionEndpoint`, `selfHostedTranscriptionEndpoint`, `hasSelfHostedTranscriptionEndpoint`, `EMPTY_SELF_HOSTED_TRANSCRIPTION`; o construtor de `OpenAiTranscriptionSession` passa a receber `(endpoint, language)`; `prompt` entra no form; cabeçalho `Authorization` só com `readApiKey`; mensagens de erro usam `providerLabel`.
+  - `src/main/speech/model-manager.ts`: o terceiro parâmetro do construtor virou `isCloudModelReady: CloudModelReadiness` (default `cloudModelReadiness()`); `getModelState` trata `provider !== 'local'` com ele.
+  - `src/main/speech/stt-session-state.ts` e `stt-service.ts`: `readSelfHostedTranscription` no estado e no construtor do `SttService`.
+  - `src/main/speech/stt-session-start.ts`: `config` só para `provider === 'local'`; a sessão remota escolhe o endpoint pelo provider.
+  - `src/main/speech/speech-runtime-service.ts`: `SpeechServiceFactories.createModelManager/createSttService` recebem o leitor das settings (`selfHostedTranscriptionReader(store)`); `src/main/host/electron-speech-services.ts` e `src/main/orcad/orcad-speech-services.ts` repassam.
+  - `src/main/runtime/speech/runtime-mobile-speech-catalog.ts`: `provider: manifest.provider` (antes colapsava em `openai`/`local`).
+  - Renderer: `VoiceSpeechModelSection.tsx` (`isCloud = provider !== 'local'`, ícone `Server`, prop `onOpenSelfHostedDialog`), `VoicePane.tsx` (estado do diálogo, salvar/desconectar, `updateSettings` pode devolver Promise e é aguardado antes de `refreshModelStates`), `VoiceModelUnloadSetting.tsx` (`provider !== 'local'`), `speech-model-description.ts`, `voice-pane-search.ts` (`getSelfHostedTranscriptionSearchEntry`).
+  - Mobile: `mobile-dictation-setup.ts` (`cloudModelNeedsKey(model)`, `provider !== 'local'` em `dictationModelRowAction`), `VoiceModelList.tsx`, `MobileDictationSetupSheet.tsx`.
+  - Docs: `docs/site/content/docs/settings.mdx`, item "Self-hosted Server".
+- Invariantes:
+  - Modelos locais e OpenAI se comportam como no oficial; sem URL configurada a entrada nova só aparece como não pronta.
+  - O áudio só sai da máquina para a URL configurada pelo usuário.
+- Como validar: `src/main/speech/openai-transcription-client.test.ts` (resolução da URL e rejeições) e `src/main/speech/stt-service.test.ts`; manual: Speaches em `http://localhost:8000` com `deepdml/faster-whisper-large-v3-turbo-ct2`, selecionar o modelo, ditar.
+
 ## Regras para o merge
 
 - Nos pontos de encaixe listados, preferir o código do fork; ao aceitar uma refatoração do upstream (função movida, assinatura trocada, arquivo dividido), re-aplicar a mudança do fork no novo lugar em vez de descartá-la.
+- Se o upstream mudar o construtor de `OpenAiTranscriptionSession`, de `ModelManager` ou de `SttService`, ou as fábricas de `SpeechServiceFactories`, manter o endpoint/leitor do fork na nova assinatura e conferir `grep -rn "self-hosted\|selfHostedTranscription\|TranscriptionEndpoint" src mobile`.
 - Se o upstream mudar a assinatura de `prepareClaudeLaunchAccount`, `resolveClaudeStructuredLaunchHome`, `claudeRoutedHomeAsync`, `ClaudeProfileRouter.{profileFor,routedHome,prepareLaunch,launchEnv,preparation}`, `resolveAccountHome`, `launchFollowsSelection` ou `structuredAgentSessionCreateIntentFingerprint`, manter o parâmetro `choice`/`claudeAccount` do fork na nova assinatura e conferir todos os chamadores (`grep -rn "claudeAccount\|ClaudeAccountChoice\|ClaudeAccountPin\|CLAUDE_ACCOUNT_PIN_ENV" src`).
 - Se o upstream criar algo equivalente (conta por chat ou por repo), avaliar substituir a implementação do fork pela oficial; até lá, manter as duas separadas e não misturar nomes.
-- Nunca remover chaves de i18n do fork (`claudeAccountRemoved`, `nativeChat.claudeAccount.*`, `agentPicker.claudeAccount.*`, `repository.claudeAccount.*`). Se o upstream regenerar os `locales/*.json`, re-inserir as chaves em `en.json`, `pt.json`, `en-runtime-required.json` e o `claudeAccountRemoved` nos demais idiomas.
+- Nunca remover chaves de i18n do fork (`claudeAccountRemoved`, `nativeChat.claudeAccount.*`, `agentPicker.claudeAccount.*`, `repository.claudeAccount.*`, `components.settings.voice.selfHosted.*`, `components.settings.voice.pane.search.selfHosted*`, `settings.voice.modelDescriptions.selfHosted`, mobile `dictation.setup.selfHostedNeedsSetup`). Se o upstream regenerar os `locales/*.json`, re-inserir as chaves em `en.json`, `pt.json`, `en-runtime-required.json` e o `claudeAccountRemoved` nos demais idiomas.
 - Listas de kinds (`AGENT_SESSION_FAILURE_KINDS`, `AGENT_SESSION_REFUSAL_REASONS`, `KIND_CATEGORY`, `KIND_VERDICT`, `REASON_WORDS`, `FAILURE_SENTENCES`, `TYPED_START_REFUSALS`, `AgentSessionPreSpawnReason`) e listas `Pick<Repo, ...>` de campos atualizáveis: garantir que `claudeAccountRemoved` e `claudeAccountId` sobrevivam a qualquer reordenação do upstream; o typecheck acusa a maioria das faltas.
 - Ao final, rodar `pnpm typecheck` e os testes `src/main/claude-accounts/claude-chat-account-pin.test.ts` e `src/main/claude-accounts/claude-launch-routing.test.ts`, depois o roteiro manual das duas features.
